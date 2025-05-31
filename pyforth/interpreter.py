@@ -92,7 +92,7 @@ class Interpreter:
     def compile(self) -> DEFINED_XT_R | None:
         code: DEFINED_XT_R = []
         self.state.prompt = "Forth> "
-        while 1:
+        while True:
             try:
                 word: WORD = self.state.next_word()  # get next word
             except StopIteration:
@@ -112,8 +112,7 @@ class Interpreter:
                     code.append(r_xt)  # push builtin for runtime
             else:
                 # Number to be pushed onto ds at runtime
-                literal = is_literal(word)
-                if literal:
+                if is_literal(word):
                     code.append(xt_r_push)
                     code.append(int(word))
                 else:  # defer
@@ -122,17 +121,14 @@ class Interpreter:
 
             if not self.state.control_stack:  # check end of compilation
                 return code
+
             self.state.prompt = "...    "
 
     def execute(self, code: DEFINED_XT_R) -> None:
         inst_ptr: POINTER = 0
         while inst_ptr < len(code):
-            next_inst = code[inst_ptr]
-            assert callable(next_inst)
-            func: NATIVE_XT_R = cast(NATIVE_XT_R, next_inst)
+            func: NATIVE_XT_R = cast(NATIVE_XT_R, code[inst_ptr])
             inst_ptr += 1
-            assert callable(func)
-            new_inst_ptr = func(self.state, code, inst_ptr)
+            new_inst_ptr: POINTER | None = func(self.state, code, inst_ptr)
             if new_inst_ptr is not None:
                 inst_ptr = new_inst_ptr
-

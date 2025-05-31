@@ -1,5 +1,18 @@
 from .core import DEFINED_XT_R, POINTER, State, XT_C
-from .runtime import runtime_execution_tokens, xt_r_jmp, xt_r_jz, xt_r_jnz
+from .runtime import runtime_execution_tokens, xt_r_rs_at
+from .runtime import (
+    xt_r_jmp,
+    xt_r_jz,
+    xt_r_jnz,
+    xt_r_to_rs,
+    xt_r_swap,
+    xt_r_from_rs,
+    xt_r_push,
+    xt_r_dup,
+    xt_r_eq,
+    xt_r_add,
+    xt_r_drop,
+)
 from .utils import fatal
 
 
@@ -93,6 +106,37 @@ def xt_c_repeat(state: State, code: DEFINED_XT_R) -> None:
     code[slot2] = len(code)  # close JNZ for WHILE
 
 
+def xt_c_do(state: State, code: DEFINED_XT_R) -> None:
+    code.append(xt_r_swap)
+    code.append(xt_r_to_rs)  # push limit to rs
+    code.append(xt_r_to_rs) # push starting index to rs
+    state.control_stack.append(("DO", len(code)))  # flag for next LOOP
+
+
+def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
+    if not state.control_stack:
+        fatal("No DO for LOOP to match")
+    word, slot = state.control_stack.pop()
+    if word != "DO":
+        fatal("LOOP preceded by %s (not DO)" % word)
+    assert isinstance(slot, POINTER)
+    code += [
+        xt_r_from_rs,
+        xt_r_push, 1,
+        xt_r_add,
+        xt_r_rs_at,
+        xt_r_swap,
+        xt_r_dup,
+        xt_r_to_rs,
+        xt_r_eq,
+        xt_r_jz, slot,
+        xt_r_from_rs,
+        xt_r_from_rs,
+        xt_r_drop,
+        xt_r_drop
+    ]
+
+
 compilation_tokens: dict[str, XT_C] = {
     ":": xt_c_colon,
     ";": xt_c_semi,
@@ -103,4 +147,6 @@ compilation_tokens: dict[str, XT_C] = {
     "until": xt_c_until,
     "while": xt_c_while,
     "repeat": xt_c_repeat,
+    "do": xt_c_do,
+    "loop": xt_c_loop,
 }

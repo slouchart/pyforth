@@ -40,3 +40,16 @@ def test_indefinite_loops(interpreter, program, data_stack, return_stack, res, c
     assert interpreter.return_stack == return_stack
     captured = capsys.readouterr()
     assert captured.out == res
+
+
+@pytest.mark.parametrize(
+    'program, data_stack, return_stack, res', [
+        pytest.param(': MAIN 4 1 do i . loop ; MAIN', [], [], '123',),
+    ]
+)
+def test_definite_loops(interpreter, program, data_stack, return_stack, res, capsys):
+    interpreter.run(program)
+    assert interpreter.data_stack == data_stack
+    assert interpreter.return_stack == return_stack
+    captured = capsys.readouterr()
+    assert captured.out == res

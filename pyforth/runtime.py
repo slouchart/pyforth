@@ -1,7 +1,7 @@
 import operator
 import sys
 from typing import cast
-from .core import State, POINTER, DEFINED_XT_R, XT_R
+from .core import State, POINTER, DEFINED_XT_R, XT_R, WORD, LITERAL
 
 
 def xt_r_add(state: State, *_) -> None:
@@ -115,22 +115,24 @@ def xt_r_emit(state: State, *_) -> None:
         sys.stdout.flush()
 
 
-def xt_r_jmp(_: State, cod, p) -> POINTER:
-    return cod[p]
+def xt_r_jmp(_: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
+    return cast(POINTER, code[p])
 
 
-def xt_r_jnz(state: State, cod, p) -> POINTER:
-    value = state.ds.pop()
-    return (cod[p], p + 1)[int(value)]
+def xt_r_jnz(state: State, code: DEFINED_XT_R, p:POINTER) -> POINTER:
+    value: LITERAL = state.ds.pop()
+    addr: POINTER = cast(POINTER, code[p])
+    return (addr, p + 1)[value]
 
 
-def xt_r_jz(state: State, cod, p) -> POINTER:
-    return (p + 1, cod[p])[state.ds.pop() == 0]
+def xt_r_jz(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
+    value: LITERAL = state.ds.pop()
+    addr: POINTER = cast(POINTER, code[p])
+    return (p + 1, addr)[value == 0]
 
 
-def xt_r_run(state: State, cod: DEFINED_XT_R, p: POINTER) -> POINTER:
-    word = cod[p]
-    assert isinstance(word, str)
+def xt_r_run(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
+    word = cast(WORD, code[p])
     xt_r: DEFINED_XT_R = cast(DEFINED_XT_R, runtime_execution_tokens[word])
     state.execute_as(xt_r)
     return p + 1
@@ -231,5 +233,6 @@ runtime_execution_tokens: dict[str, XT_R] = {
     'cr': [xt_r_push, 10, xt_r_emit],
     'variable': [xt_r_create, xt_r_push, 0, xt_r_coma],
     'constant': [xt_r_create, xt_r_coma, xt_r_does, xt_r_at],
+    'i': [xt_r_rs_at]
 }
 
