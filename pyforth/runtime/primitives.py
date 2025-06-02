@@ -46,3 +46,19 @@ def xt_r_run(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
         return p + 1
     except KeyError:
         raise ForthCompilationError(f"Undefined word {word!r}") from None
+
+
+@pass_state_only
+def xt_r_exit(state: State) -> POINTER:
+    return state.rs.pop()
+
+
+def xt_r_push_rs(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
+    state.rs.append(code[p])
+    return p + 1
+
+
+@pass_state_only
+def xt_r_drop_rs(state: State) -> None:
+    state.rs.pop()
+    return None

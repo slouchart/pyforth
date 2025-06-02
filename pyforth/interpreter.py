@@ -16,6 +16,7 @@ _compilation_tokens: dict[str, XT_C] = {
     "else": branching.xt_c_else,
     "then": branching.xt_c_then,
     "begin": loops.xt_c_begin,
+    'again': loops.xt_c_again,
     "until": loops.xt_c_until,
     "while": loops.xt_c_while,
     "repeat": loops.xt_c_repeat,

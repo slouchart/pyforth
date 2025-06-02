@@ -60,3 +60,10 @@ def test_bootstrap(interpreter, capsys):
     interpreter.run(input_code='4 spaces')
     captured = capsys.readouterr()
     assert captured.out == ' '*4
+
+
+def test_exit(interpreter):
+    program = ': main begin dup 3 > if drop exit then dup 1 + again ; 1 main'
+    interpreter.run(program)
+    assert interpreter.data_stack == [1, 2, 3]
+    assert interpreter.return_stack == []

@@ -1,7 +1,6 @@
 
 from pyforth.core import STACK
-from .utils import pass_both_stacks, pure_stack_operation
-
+from .utils import pass_both_stacks, pure_stack_operation, pass_state_only
 
 
 @pure_stack_operation

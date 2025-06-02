@@ -22,3 +22,5 @@
 : bl 32 ;
 : space bl emit ;
 : spaces dup 0<> if 0 do space loop then ;
+: >= < invert ;
+: <= > invert ;
