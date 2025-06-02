@@ -53,3 +53,10 @@ def test_definite_loops(interpreter, program, data_stack, return_stack, res, cap
     assert interpreter.return_stack == return_stack
     captured = capsys.readouterr()
     assert captured.out == res
+
+
+def test_bootstrap(interpreter, capsys):
+    assert 'abs' in interpreter.words
+    interpreter.run(input_code='4 spaces')
+    captured = capsys.readouterr()
+    assert captured.out == ' '*4

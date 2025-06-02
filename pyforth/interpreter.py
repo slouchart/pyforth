@@ -1,17 +1,37 @@
 from __future__ import annotations
 import re
-import sys
-from typing import cast
+from pathlib import Path
+from typing import cast, Sequence
 
-from .compiler import compilation_tokens
+from .compiler import primitives, branching, loops, doloop
 from .core import DATA_STACK, DEFINED_XT_R, NATIVE_XT_R, POINTER, RETURN_STACK, WORD, XT_C, XT_R
 from .core import ForthCompilationError, State
-from .runtime import runtime_execution_tokens, xt_r_push, xt_r_run
-from .utils import is_literal
+from .runtime import runtime_execution_tokens, execute, push
+
+
+_compilation_tokens: dict[str, XT_C] = {
+    ":": primitives.xt_c_colon,
+    ";": primitives.xt_c_semi,
+    "if": branching.xt_c_if,
+    "else": branching.xt_c_else,
+    "then": branching.xt_c_then,
+    "begin": loops.xt_c_begin,
+    "until": loops.xt_c_until,
+    "while": loops.xt_c_while,
+    "repeat": loops.xt_c_repeat,
+    "do": doloop.xt_c_do,
+    "loop": doloop.xt_c_loop,
+}
 
 
 class InterpreterState(State):
-    def __init__(self, parent: Interpreter, input_code: str = '', prompt="... ", interactive: bool = True):
+    def __init__(
+        self,
+        parent: Interpreter,
+        input_code: str = '',
+        prompt="... ",
+        interactive: bool = True
+    ):
         self.input_code: str = input_code
         self.prompt: str = prompt
         self.interpreter: Interpreter = parent
@@ -35,6 +55,10 @@ class InterpreterState(State):
         self.words = self.words[1:]
         return word
 
+    @property
+    def runtime_execution_tokens(self) -> dict[WORD, XT_R]:
+        return runtime_execution_tokens
+
     def tokenize(self, s):
         """clip comments, split to list of words
         """
@@ -48,8 +72,28 @@ class InterpreterState(State):
 
 class Interpreter:
 
+    @staticmethod
+    def is_literal(word: str) -> bool:
+        try:
+            int(word)
+            return True
+        except ValueError:
+            pass
+        return False
+
+    def _bootstrap(self) -> None:
+        extension_path = Path(__file__).parent / 'core.frth'
+        with extension_path.open(mode='r') as stream:
+            code: str = ' '.join(stream.readlines())
+            interactive_flag = self.state.interactive
+            self.state.interactive = False
+            self.run(input_code=code)
+            self.state.interactive = interactive_flag
+
+
     def __init__(self, interactive: bool = True):
         self.state: State = InterpreterState(parent=self, interactive=interactive)
+        self._bootstrap()
 
     def reset(self):
         self.state.input_code = ''
@@ -60,6 +104,10 @@ class Interpreter:
         self.state.next_heap_address = 0
         self.state.words = []
         self.state.last_created_word = ''
+
+    @property
+    def words(self) -> Sequence[WORD]:
+        return list(runtime_execution_tokens) + list(_compilation_tokens)
 
     @property
     def data_stack(self) -> DATA_STACK:
@@ -99,25 +147,22 @@ class Interpreter:
                 return None
 
             assert word
-            c_xt: XT_C | None = compilation_tokens.get(word)  # Is there a compile time action ?
+            c_xt: XT_C | None = _compilation_tokens.get(word)  # Is there a compile time action ?
             r_xt: XT_R | None = runtime_execution_tokens.get(word)  # Is there a runtime action ?
 
             if c_xt:
                 c_xt(self.state, code)  # run at compile time
             elif r_xt:
                 if isinstance(r_xt, list):
-                    code.append(xt_r_run)  # Compiled word.
-                    code.append(word)  # for now do dynamic lookup
+                    code += [execute, word]
                 else:
                     code.append(r_xt)  # push builtin for runtime
             else:
                 # Number to be pushed onto ds at runtime
-                if is_literal(word):
-                    code.append(xt_r_push)
-                    code.append(int(word))
+                if self.is_literal(word):
+                    code += [push, int(word)]
                 else:  # defer
-                    code.append(xt_r_run)  # Change rPush to rRun
-                    code.append(word)  # Assume word will be defined
+                    code += [execute, word]
 
             if not self.state.control_stack:  # check end of compilation
                 return code

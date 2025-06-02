@@ -1,0 +1,37 @@
+from pyforth.core import WORD, XT_R
+
+from . import arithmetic, comparison, heap, logical, output, primitives, stacks
+
+
+runtime_execution_tokens: dict[WORD, XT_R] = {
+    "+": arithmetic.xt_r_add,
+    "-": arithmetic.xt_r_sub,
+    "/": arithmetic.xt_r_div,
+    'mod': arithmetic.xt_r_mod,
+    "*": arithmetic.xt_r_mul,
+    'depth': stacks.xt_r_depth,
+    "over": stacks.xt_r_over,
+    "drop": stacks.xt_r_drop,
+    "dup": stacks.xt_r_dup,
+    'rot': stacks.xt_r_rot,
+    "swap": stacks.xt_r_swap,
+    'emit': output.xt_r_emit,
+    ".": output.xt_r_dot,
+    "dump": output.xt_r_dump,
+    "=": comparison.xt_r_eq,
+    ">": comparison.xt_r_gt,
+    "<": comparison.xt_r_lt,
+    'and': logical.xt_r_and,
+    'or': logical.xt_r_or,
+    'invert': logical.xt_r_invert,
+    'xor': logical.xt_r_xor,
+    ",": heap.xt_r_coma,
+    "@": heap.xt_r_at,
+    "!": heap.xt_r_bang,
+    ">r": stacks.xt_r_to_rs,
+    "r>": stacks.xt_r_from_rs,
+    "r@": stacks.xt_r_rs_at,
+    "allot": heap.xt_r_allot,
+    "create": primitives.xt_r_create,
+    "does>": primitives.xt_r_does,
+}

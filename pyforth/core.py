@@ -34,6 +34,10 @@ class State(ABC):
     prompt: str = ""
     interactive: bool = False
 
+    @property
+    @abstractmethod
+    def runtime_execution_tokens(self) -> dict[WORD, XT_R]: ...
+
     @abstractmethod
     def next_word(self) -> WORD: ...
 
