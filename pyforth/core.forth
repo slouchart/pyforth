@@ -2,6 +2,7 @@
 : constant create , does> @ ;
 
 variable base
+: binary 2 base ! ;
 : decimal 10 base ! ;
 : hex 16 base ! ;
 decimal
