@@ -47,15 +47,15 @@ def test_stack_ops(interpreter, program, res, oracle):
 
 @pytest.mark.parametrize(
     'program, res', [
-        ('1 2 <', 1),
+        ('1 2 <', -1),
         ('2 1 <', 0),
         ('1 2 >', 0),
-        ('2 1 >', 1),
-        ('1 1 =', 1),
-        ('-1 0<', 1),
-        ('0 0=', 1),
+        ('2 1 >', -1),
+        ('1 1 =', -1),
+        ('-1 0<', -1),
+        ('0 0=', -1),
         ('1 0=', 0),
-        ('1 0>', 1),
+        ('1 0>', -1),
         ('-1 0>', 0)
     ]
 )
@@ -66,14 +66,16 @@ def test_num_cmp(interpreter, program, res):
 
 @pytest.mark.parametrize(
     'program, res', [
-        ('1 1 and', 1),
-        ('1 0 and', 0),
-        ('0 1 or', 1),
-        ('0 0 or', 0),
-        ('0 invert', 1),
-        ('1 invert', 0),
-        ('1 0 xor', 1),
-        ('1 1 xor', 0)
+        ('true', -1),
+        ('false', 0),
+        ('true true and', -1),
+        ('true false and', 0),
+        ('false true or', -1),
+        ('false false or', 0),
+        ('false invert', -1),
+        ('true invert', 0),
+        ('true false xor', -1),
+        ('true true xor', 0)
     ]
 )
 def test_bool_ops(interpreter, program, res):

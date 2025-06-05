@@ -27,3 +27,7 @@ def xt_r_coma(state: State) -> None:  # push tos into heap
     state.heap[state.next_heap_address] = state.ds.pop()
     state.next_heap_address += 1
 
+
+@pass_state_only
+def xt_r_here(state: State) -> None:  # push next heap address onto tos
+    state.ds.append(state.next_heap_address)

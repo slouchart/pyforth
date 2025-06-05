@@ -8,20 +8,20 @@ from .utils import pure_stack_operation
 def xt_r_and(ds: STACK) -> None:
     b = ds.pop()
     a = ds.pop()
-    ds.append(operator.and_(a, b))
+    ds.append(a & b)
 
 
 @pure_stack_operation
 def xt_r_or(ds: STACK) -> None:
     b = ds.pop()
     a = ds.pop()
-    ds.append(operator.or_(a, b))
+    ds.append(a | b)
 
 
 @pure_stack_operation
 def xt_r_invert(ds: STACK) -> None:
     a = ds.pop()
-    ds.append(operator.not_(a))
+    ds.append(operator.invert(a))
 
 
 @pure_stack_operation

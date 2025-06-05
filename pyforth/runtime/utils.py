@@ -1,7 +1,11 @@
 from functools import wraps
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 from pyforth.core import DEFINED_XT_R, NATIVE_XT_R, POINTER, STACK, State
+
+
+def bool2forth(value: Any) -> int:
+    return -1 if bool(value) else 0
 
 
 def pass_both_stacks(func: Callable[[STACK, STACK], None]) -> NATIVE_XT_R:
@@ -40,7 +44,7 @@ def pure_stack_operation(func: Callable[[STACK], None]) -> NATIVE_XT_R:
     return wrapper
 
 
-def pass_state_only(func: Callable[[State], None]) -> NATIVE_XT_R:
+def pass_state_only(func: Callable[[State], Optional[POINTER]]) -> NATIVE_XT_R:
 
     @wraps(func)
     def wrapper(state: State, *_) -> Optional[POINTER]:

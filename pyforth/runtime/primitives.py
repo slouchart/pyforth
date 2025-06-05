@@ -48,13 +48,8 @@ def xt_r_run(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
         raise ForthCompilationError(f"Undefined word {word!r}") from None
 
 
-@pass_state_only
-def xt_r_exit(state: State) -> POINTER:
-    return state.rs.pop()
-
-
 def xt_r_push_rs(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
-    state.rs.append(code[p])
+    state.rs.append(cast(LITERAL, code[p]))
     return p + 1
 
 

@@ -12,13 +12,13 @@ def xt_c_do(state: State, code: DEFINED_XT_R) -> None:
         stacks.xt_r_to_rs,  # push limit to rs
         stacks.xt_r_to_rs  # push starting index to rs
     ]
-    state.control_stack.append(("DO", len(code)))  # flag for next LOOP
+    state.control_stack.append(("DO", len(code), ()))  # flag for next LOOP
 
 
 def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
     if not state.control_stack:
         fatal("No DO for LOOP to match")
-    word, slot = state.control_stack.pop()
+    word, slot, _ = state.control_stack.pop()
     if word != "DO":
         fatal(f"LOOP preceded by {word} (not DO)")
     assert isinstance(slot, POINTER)

@@ -62,8 +62,16 @@ def test_bootstrap(interpreter, capsys):
     assert captured.out == ' '*4
 
 
-def test_exit(interpreter):
-    program = ': main begin dup 3 > if drop exit then dup 1 + again ; 1 main'
+@pytest.mark.parametrize(
+    'program, data_stack, return_stack', [
+        (': main begin dup 3 > if drop exit then dup 1 + again ; 1 main', [1, 2, 3], []),
+        (': main dup exit 2 + ; 0 main', [0, 0], []),
+        (': main begin dup 3 = if exit then 1 +  false until ; 1 main', [3], []),
+        (': main begin dup 3 < while 1 + dup 3 = if exit then repeat ; 1 main', [3], []),
+        (': main begin dup 3 = if exit then true while 1 + repeat ; 1 main', [3], [])
+    ]
+)
+def test_exit(interpreter, program, data_stack, return_stack):
     interpreter.run(program)
-    assert interpreter.data_stack == [1, 2, 3]
-    assert interpreter.return_stack == []
+    assert interpreter.data_stack == data_stack
+    assert interpreter.return_stack == return_stack

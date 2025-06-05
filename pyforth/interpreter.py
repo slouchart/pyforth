@@ -22,6 +22,7 @@ _compilation_tokens: dict[str, XT_C] = {
     "repeat": loops.xt_c_repeat,
     "do": doloop.xt_c_do,
     "loop": doloop.xt_c_loop,
+    'exit': primitives.xt_c_exit,
 }
 
 
@@ -94,17 +95,18 @@ class Interpreter:
 
     def __init__(self, interactive: bool = True):
         self.state: State = InterpreterState(parent=self, interactive=interactive)
+        self._fence: int = 0
         self._bootstrap()
+        self._fence = self.state.next_heap_address  # protect vars & cons defined in bootstrap
 
     def reset(self):
         self.state.input_code = ''
         self.state.ds = []
         self.state.rs = []
         self.state.control_stack = []
-        self.state.heap = [0] * 20
-        self.state.next_heap_address = 0
         self.state.words = []
         self.state.last_created_word = ''
+        self.state.next_heap_address = self._fence
 
     @property
     def words(self) -> Sequence[WORD]:

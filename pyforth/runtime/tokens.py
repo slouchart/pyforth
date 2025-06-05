@@ -34,5 +34,5 @@ runtime_execution_tokens: dict[WORD, XT_R] = {
     "allot": heap.xt_r_allot,
     "create": primitives.xt_r_create,
     "does>": primitives.xt_r_does,
-    'exit': primitives.xt_r_exit,
+    'here': heap.xt_r_here,
 }
