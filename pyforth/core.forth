@@ -25,7 +25,6 @@ decimal
 : 0<> 0= invert ;
 : cr 10 emit ;
 
-: i r@ ;
 : stack? depth 0= invert ;
 
 : bl 32 ;

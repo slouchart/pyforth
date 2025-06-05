@@ -13,7 +13,7 @@ def xt_c_colon(state: State, _) -> None:
 def xt_c_semi(state: State, code: DEFINED_XT_R) -> None:
     if not state.control_stack:
         fatal("No : for ; to match")
-    word, label, exit_ = state.control_stack.pop()
+    word, label, exit_, *_ = state.control_stack.pop()
     if word != "COLON":
         fatal(": not balanced with ;")
     assert isinstance(label, str)
@@ -28,7 +28,7 @@ def xt_c_exit(state: State, code: DEFINED_XT_R) -> None:
     word, label, _ = state.control_stack.pop()
     if word in ('IF', 'WHILE'):
         xt_c_exit(state, code)
-        state.control_stack.append((word, label, ()))
+        state.control_stack.append((word, label, _))
     else:
         if word not in ('COLON', 'BEGIN', 'DO'):
             fatal(f"EXIT: Unexpected block structure {word}")

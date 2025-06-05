@@ -23,6 +23,8 @@ _compilation_tokens: dict[WORD, XT_C] = {
     "do": doloop.xt_c_do,
     "loop": doloop.xt_c_loop,
     'exit': primitives.xt_c_exit,
+    'i': doloop.xt_c_loop_index_i,
+    'j': doloop.xt_c_loop_index_j,
 }
 
 

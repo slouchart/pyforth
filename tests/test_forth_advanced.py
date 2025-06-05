@@ -86,3 +86,16 @@ def test_exit_do_loop(interpreter, program, data_stack, return_stack):
     interpreter.run(program)
     assert interpreter.data_stack == data_stack
     assert interpreter.return_stack == return_stack
+
+
+
+@pytest.mark.parametrize(
+    'program, data_stack, return_stack', [
+        (': main 4 1 do 3 1 do i j + loop loop ; main ', [2, 3, 3, 4, 4, 5], []),
+        (': main 4 1 do i 3 1 do j loop loop ; main ', [1, 1, 2, 2, 1, 2, 3, 1, 2], []),
+    ]
+)
+def test_nested_do_loops(interpreter, program, data_stack, return_stack):
+    interpreter.run(program)
+    assert interpreter.data_stack == data_stack
+    assert interpreter.return_stack == return_stack
