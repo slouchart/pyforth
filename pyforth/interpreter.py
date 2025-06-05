@@ -9,7 +9,7 @@ from .core import ForthCompilationError, State
 from .runtime import runtime_execution_tokens, execute, push
 
 
-_compilation_tokens: dict[str, XT_C] = {
+_compilation_tokens: dict[WORD, XT_C] = {
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
     "if": branching.xt_c_if,
@@ -26,7 +26,7 @@ _compilation_tokens: dict[str, XT_C] = {
 }
 
 
-class InterpreterState(State):
+class _InterpreterState(State):
     def __init__(
         self,
         parent: Interpreter,
@@ -84,7 +84,7 @@ class Interpreter:
         return False
 
     def _bootstrap(self) -> None:
-        extension_path = Path(__file__).parent / 'core.frth'
+        extension_path = Path(__file__).parent / 'core.forth'
         with extension_path.open(mode='r') as stream:
             code: str = ' '.join(stream.readlines())
             interactive_flag = self.state.interactive
@@ -93,20 +93,20 @@ class Interpreter:
             self.state.interactive = interactive_flag
 
 
-    def __init__(self, interactive: bool = True):
-        self.state: State = InterpreterState(parent=self, interactive=interactive)
-        self._fence: int = 0
+    def __init__(self, interactive: bool = True) -> None:
+        self.state: State = _InterpreterState(parent=self, interactive=interactive)
+        self._heap_fence: int = 0
         self._bootstrap()
-        self._fence = self.state.next_heap_address  # protect vars & cons defined in bootstrap
+        self._heap_fence = self.state.next_heap_address  # protect vars & cons defined in bootstrap
 
-    def reset(self):
+    def reset(self) -> None:
         self.state.input_code = ''
         self.state.ds = []
         self.state.rs = []
         self.state.control_stack = []
         self.state.words = []
         self.state.last_created_word = ''
-        self.state.next_heap_address = self._fence
+        self.state.next_heap_address = self._heap_fence
 
     @property
     def words(self) -> Sequence[WORD]:
