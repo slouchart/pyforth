@@ -108,3 +108,15 @@ def test_output(interpreter, program, res, capsys):
     captured = capsys.readouterr()
     assert captured.out == res
     assert interpreter.data_stack == []
+
+
+@pytest.mark.parametrize(
+    'program, res', [
+        pytest.param('HEX A 1 + . SPACE DECIMAL 9 1 + .', "B 10"),
+        ('2 BASE ! 11 111 + . SPACE DECIMAL 11 111 + .', "1010 122")
+    ]
+)
+def test_base(interpreter, program, res, capsys):
+    interpreter.run(program)
+    captured = capsys.readouterr()
+    assert captured.out == res

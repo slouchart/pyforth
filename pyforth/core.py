@@ -36,6 +36,16 @@ class State(ABC):
 
     @property
     @abstractmethod
+    def base(self) -> int: ...
+
+    @abstractmethod
+    def int_to_str(self, value: int) -> str: ...
+
+    @abstractmethod
+    def word_to_int(self, word: WORD) -> int: ...
+
+    @property
+    @abstractmethod
     def runtime_execution_tokens(self) -> dict[WORD, XT_R]: ...
 
     @abstractmethod

@@ -71,13 +71,30 @@ class _InterpreterState(State):
     def execute_as(self, code: DEFINED_XT_R) -> None:
         self.interpreter.execute(code)
 
+    @property
+    def base(self) -> int:
+        return self.heap[0]
+
+    def int_to_str(self, value: int) -> str:
+        match self.base:
+            case 10:
+                return str(value)
+            case 16:
+                return hex(value)[2:].upper()
+            case 2:
+                return bin(value)[2:].upper()
+            case _:
+                raise ValueError(f"Unsupported numeric basis: {self.base!r}")
+
+    def word_to_int(self, word: WORD) -> int:
+        return int(word, base=self.base)
+
 
 class Interpreter:
 
-    @staticmethod
-    def is_literal(word: str) -> bool:
+    def is_literal(self, word: str) -> bool:
         try:
-            int(word)
+            int(word, base=self.state.base)
             return True
         except ValueError:
             pass
@@ -91,7 +108,6 @@ class Interpreter:
             self.state.interactive = False
             self.run(input_code=code)
             self.state.interactive = interactive_flag
-
 
     def __init__(self, interactive: bool = True) -> None:
         self.state: State = _InterpreterState(parent=self, interactive=interactive)
@@ -163,7 +179,7 @@ class Interpreter:
             else:
                 # Number to be pushed onto ds at runtime
                 if self.is_literal(word):
-                    code += [push, int(word)]
+                    code += [push, self.state.word_to_int(word)]
                 else:  # defer
                     code += [execute, word]
 

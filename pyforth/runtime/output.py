@@ -12,7 +12,8 @@ def xt_r_dump(ds: STACK) -> None:
 
 @pass_state_only
 def xt_r_dot(state: State) -> None:
-    sys.stdout.write(str(state.ds.pop()))
+    value: int = state.ds.pop()
+    sys.stdout.write(state.int_to_str(value))
     if state.interactive:
         sys.stdout.write("\n")
         sys.stdout.flush()
