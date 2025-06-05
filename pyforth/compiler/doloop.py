@@ -1,7 +1,6 @@
 
 from pyforth.core import DEFINED_XT_R, POINTER, State
-from pyforth.compiler.utils import fatal
-
+from pyforth.compiler.utils import fatal, set_exit_jmp_address
 
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
 
@@ -18,7 +17,7 @@ def xt_c_do(state: State, code: DEFINED_XT_R) -> None:
 def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
     if not state.control_stack:
         fatal("No DO for LOOP to match")
-    word, slot, _ = state.control_stack.pop()
+    word, slot, exit_ = state.control_stack.pop()
     if word != "DO":
         fatal(f"LOOP preceded by {word} (not DO)")
     assert isinstance(slot, POINTER)
@@ -31,9 +30,13 @@ def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
         stacks.xt_r_dup,      # ds: limit, index, index
         stacks.xt_r_to_rs,    # rs: limit, index - ds: limit, index
         comparison.xt_r_eq,
-        primitives.xt_r_jz, slot, # do..loop
-        stacks.xt_r_from_rs,  # cleanup
+        primitives.xt_r_jz, slot, # back to DO or pass
+    ]
+
+    set_exit_jmp_address(exit_, code)
+    code += [
+        stacks.xt_r_from_rs,  # LOOP cleanup
         stacks.xt_r_from_rs,
         stacks.xt_r_drop,
-        stacks.xt_r_drop
+        stacks.xt_r_drop,
     ]
