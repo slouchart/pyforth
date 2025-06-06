@@ -51,3 +51,12 @@ def pass_state_only(func: Callable[[State], Optional[POINTER]]) -> NATIVE_XT_R:
         return func(state)
 
     return wrapper
+
+
+def compiling_word(func: Callable[[State, DEFINED_XT_R], None]) -> NATIVE_XT_R:
+
+    @wraps(func)
+    def wrapper(state: State, code: DEFINED_XT_R, *_) -> None:
+        func(state, code)
+
+    return wrapper

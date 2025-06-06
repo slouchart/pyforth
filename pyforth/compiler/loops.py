@@ -1,14 +1,16 @@
-from pyforth.core import DEFINED_XT_R, POINTER, State, WORD
+from pyforth.core import DEFINED_XT_R, POINTER, State
 
 from pyforth.runtime import primitives
-
+from pyforth.runtime.utils import compiling_word
 from pyforth.compiler.utils import fatal, set_exit_jmp_address
 
 
+@compiling_word
 def xt_c_begin(state: State, code: DEFINED_XT_R) -> None:
     state.control_stack.append(("BEGIN", len(code), ()))  # flag for following UNTIL/REPEAT
 
 
+@compiling_word
 def xt_c_until(state: State, code: DEFINED_XT_R) -> None:
     if not state.control_stack:
         fatal("No BEGIN for UNTIL to match")
@@ -21,12 +23,14 @@ def xt_c_until(state: State, code: DEFINED_XT_R) -> None:
     set_exit_jmp_address(exit_, code)
 
 
+@compiling_word
 def xt_c_while(state: State, code: DEFINED_XT_R) -> None:
     code.append(primitives.xt_r_jz)
     state.control_stack.append(("WHILE", len(code), ()))  # flag for following REPEAT
     code.append(0)  # to be filled in by REPEAT
 
 
+@compiling_word
 def xt_c_repeat(state: State, code: DEFINED_XT_R) -> None:
 
     if not state.control_stack:
@@ -51,6 +55,7 @@ def xt_c_repeat(state: State, code: DEFINED_XT_R) -> None:
     set_exit_jmp_address(exit_, code)
 
 
+@compiling_word
 def xt_c_again(state: State, code: DEFINED_XT_R) -> None:
     if not state.control_stack:
         fatal("No BEGIN for AGAIN to match")

@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import cast, Sequence
 
 from .compiler import primitives, branching, loops, doloop
-from .core import DATA_STACK, DEFINED_XT_R, NATIVE_XT_R, POINTER, RETURN_STACK, WORD, XT_C, XT_R
+from .core import DATA_STACK, DEFINED_XT_R, NATIVE_XT_R, POINTER, RETURN_STACK, WORD, XT_R
 from .core import ForthCompilationError, State
 from .runtime import runtime_execution_tokens, execute, push
 
 
-_compilation_tokens: dict[WORD, XT_C] = {
+_compilation_tokens: dict[WORD, XT_R] = {
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
     "if": branching.xt_c_if,
@@ -172,28 +172,32 @@ class Interpreter:
             except StopIteration:
                 return None
 
-            assert word
-            c_xt: XT_C | None = _compilation_tokens.get(word)  # Is there a compile time action ?
-            r_xt: XT_R | None = runtime_execution_tokens.get(word)  # Is there a runtime action ?
-
-            if c_xt:
-                c_xt(self.state, code)  # run at compile time
-            elif r_xt:
-                if isinstance(r_xt, list):
-                    code += [execute, word]
+            found, immediate, c_xt, r_xt = self._search_word(word)
+            if found:
+                if immediate:
+                    assert c_xt is not None
+                    # self.execute(self._compile_address(word, c_xt))
+                    self._execute_immediate(c_xt, code)
                 else:
-                    code.append(r_xt)  # push builtin for runtime
+                    assert r_xt is not None
+                    code += self._compile_address(word, r_xt)
             else:
                 # Number to be pushed onto ds at runtime
                 if self.is_literal(word):
                     code += [push, self.state.word_to_int(word)]
                 else:  # defer
-                    code += [execute, word]
+                    code += self._deferred_definition(word)
 
             if not self.state.control_stack:  # check end of compilation
                 return code
 
             self.state.prompt = "...    "
+
+    def _execute_immediate(self, func: XT_R, code: DEFINED_XT_R) -> None:
+        if isinstance(func, list):
+            self.execute(func)  # TODO needs rework
+        else:
+            func(self.state, code, -1)  # must pass a pointer anyway
 
     def execute(self, code: DEFINED_XT_R) -> None:
         inst_ptr: POINTER = 0
@@ -203,3 +207,21 @@ class Interpreter:
             new_inst_ptr: POINTER | None = func(self.state, code, inst_ptr)
             if new_inst_ptr is not None:
                 inst_ptr = new_inst_ptr
+
+    def _search_word(self, word: WORD) -> tuple[bool, bool, XT_R | None, XT_R | None]:
+
+        c_xt: XT_R | None = _compilation_tokens.get(word)  # Is there a compile time action ?
+        r_xt: XT_R | None = runtime_execution_tokens.get(word)  # Is there a runtime action ?
+
+        found: bool = c_xt is not None or r_xt is not None
+        immediate: bool = c_xt is not None
+        return found, immediate, c_xt, r_xt
+
+    def _compile_address(self, word: WORD, xt_r: XT_R) -> DEFINED_XT_R:
+        if isinstance(xt_r, list):
+            return [execute, word]
+
+        return [xt_r, ]  # push builtin for runtime
+
+    def _deferred_definition(self, word: WORD) -> DEFINED_XT_R:
+        return [execute, word]

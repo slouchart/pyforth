@@ -14,7 +14,6 @@ CONTROL_STACK = STACK[CONTROL_STRUCT]
 NATIVE_XT_R = Callable[["State", list, int], Optional[POINTER]]
 DEFINED_XT_R = list[NATIVE_XT_R | LITERAL | WORD]
 XT_R = NATIVE_XT_R | DEFINED_XT_R
-XT_C = Callable[["State", DEFINED_XT_R], None]
 
 
 class ForthCompilationError(BaseException):

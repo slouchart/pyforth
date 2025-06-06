@@ -1,9 +1,10 @@
 from typing import Final
 
-from pyforth.core import DEFINED_XT_R, POINTER, State, CONTROL_STACK, XT_C
+from pyforth.core import DEFINED_XT_R, POINTER, State, CONTROL_STACK, XT_R
 from pyforth.compiler.utils import fatal, set_exit_jmp_address
 
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
+from pyforth.runtime.utils import compiling_word
 
 
 def _current_nested_count(cs: CONTROL_STACK) -> int:
@@ -11,6 +12,8 @@ def _current_nested_count(cs: CONTROL_STACK) -> int:
         [item for item in cs if item[0] == 'DO']
     )
 
+
+@compiling_word
 def xt_c_do(state: State, code: DEFINED_XT_R) -> None:
     code += [
         stacks.xt_r_swap,
@@ -20,6 +23,7 @@ def xt_c_do(state: State, code: DEFINED_XT_R) -> None:
     state.control_stack.append(("DO", len(code), ()))  # flag for next LOOP
 
 
+@compiling_word
 def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
     if not state.control_stack:
         fatal("No DO for LOOP to match")
@@ -51,7 +55,7 @@ def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
 MAX_NESTED_LOOPS: Final[int] = 3
 
 
-def loop_index_factory(expected_nested_level: int, index_word: str) -> XT_C:
+def loop_index_factory(expected_nested_level: int, index_word: str) -> XT_R:
 
     def func(state: State, code: DEFINED_XT_R) -> None:
 
@@ -68,4 +72,4 @@ def loop_index_factory(expected_nested_level: int, index_word: str) -> XT_C:
                  stacks.xt_r_to_rs, stacks.xt_r_to_rs,  # put them back
                  ] * (nb_nested_do_loops - expected_nested_level)
 
-    return func
+    return compiling_word(func)
