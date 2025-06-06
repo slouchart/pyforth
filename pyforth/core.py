@@ -38,6 +38,10 @@ class State(ABC):
     @abstractmethod
     def base(self) -> int: ...
 
+    @property
+    @abstractmethod
+    def precision(self) -> int: ...
+
     @abstractmethod
     def int_to_str(self, value: int) -> str: ...
 

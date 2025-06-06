@@ -2,12 +2,13 @@ import sys
 
 from pyforth.core import STACK, State
 
-from .utils import pure_stack_operation, pass_state_only
+from .utils import pass_state_only, pass_both_stacks
 
 
-@pure_stack_operation
-def xt_r_dump(ds: STACK) -> None:
+@pass_both_stacks
+def xt_r_dump(ds: STACK, rs: STACK) -> None:
     print(f"state.ds = {ds}")
+    print(f"state.rs = {rs}")
 
 
 @pass_state_only

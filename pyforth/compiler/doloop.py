@@ -1,8 +1,9 @@
-from pyforth.core import DEFINED_XT_R, POINTER, State, CONTROL_STACK
+from typing import Final
+
+from pyforth.core import DEFINED_XT_R, POINTER, State, CONTROL_STACK, XT_C
 from pyforth.compiler.utils import fatal, set_exit_jmp_address
 
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
-from pyforth.runtime.stacks import xt_r_to_rs
 
 
 def _current_nested_count(cs: CONTROL_STACK) -> int:
@@ -47,26 +48,24 @@ def xt_c_loop(state: State, code: DEFINED_XT_R) -> None:
     ]
 
 
-def xt_c_loop_index_i(state: State, code: DEFINED_XT_R) -> None:
-    nb_nested_do_loops: int = _current_nested_count(state.control_stack)
-    match nb_nested_do_loops:
-        case 1:
-            code += [stacks.xt_r_rs_at]
-        case 2:
-            code += [
-                stacks.xt_r_from_rs, stacks.xt_r_from_rs,
-                stacks.xt_r_rs_at,
-                stacks.xt_r_rot, stacks.xt_r_rot,
-                stacks.xt_r_to_rs, xt_r_to_rs
-            ]
-        case _:
-            fatal(f"Loop index I usage: Unsupported level of nested DO..LOOP {nb_nested_do_loops}")
+MAX_NESTED_LOOPS: Final[int] = 3
 
 
-def xt_c_loop_index_j(state: State, code: DEFINED_XT_R) -> None:
-    nb_nested_do_loops: int = _current_nested_count(state.control_stack)
-    match nb_nested_do_loops:
-        case 2:
-            code += [stacks.xt_r_rs_at]
-        case _:
-            fatal(f"Loop index J usage: Unsupported level of nested DO..LOOP {nb_nested_do_loops}")
+def loop_index_factory(expected_nested_level: int, index_word: str) -> XT_C:
+
+    def func(state: State, code: DEFINED_XT_R) -> None:
+
+        nb_nested_do_loops: int = _current_nested_count(state.control_stack)
+
+        if MAX_NESTED_LOOPS < nb_nested_do_loops < expected_nested_level:
+            fatal(f"Loop index {index_word.upper()!r} usage: "
+                  f"Unsupported level of nested DO..LOOP {nb_nested_do_loops}")
+
+        code += [stacks.xt_r_from_rs,  # move around outermost do-loop params
+                 stacks.xt_r_from_rs,] * (nb_nested_do_loops - expected_nested_level)
+        code += [stacks.xt_r_rs_at]    # reaching the one we need
+        code += [stacks.xt_r_rot, stacks.xt_r_rot,  # rearrange order
+                 stacks.xt_r_to_rs, stacks.xt_r_to_rs,  # put them back
+                 ] * (nb_nested_do_loops - expected_nested_level)
+
+    return func

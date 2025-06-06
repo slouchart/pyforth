@@ -23,8 +23,9 @@ _compilation_tokens: dict[WORD, XT_C] = {
     "do": doloop.xt_c_do,
     "loop": doloop.xt_c_loop,
     'exit': primitives.xt_c_exit,
-    'i': doloop.xt_c_loop_index_i,
-    'j': doloop.xt_c_loop_index_j,
+    'i': doloop.loop_index_factory(1, 'i'),
+    'j': doloop.loop_index_factory(2, 'j'),
+    'k': doloop.loop_index_factory(3, 'k'),
 }
 
 
@@ -76,6 +77,10 @@ class _InterpreterState(State):
     @property
     def base(self) -> int:
         return self.heap[0]
+
+    @property
+    def precision(self) -> int:
+        return self.heap[3]
 
     def int_to_str(self, value: int) -> str:
         match self.base:

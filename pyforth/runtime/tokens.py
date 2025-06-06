@@ -1,6 +1,6 @@
 from pyforth.core import WORD, XT_R
 
-from . import arithmetic, comparison, heap, logical, output, primitives, stacks
+from . import arithmetic, comparison, heap, logical, output, primitives, stacks, fixed_point
 
 
 runtime_execution_tokens: dict[WORD, XT_R] = {
@@ -35,4 +35,9 @@ runtime_execution_tokens: dict[WORD, XT_R] = {
     "create": primitives.xt_r_create,
     "does>": primitives.xt_r_does,
     'here': heap.xt_r_here,
+    ".f": fixed_point.xt_r_dot_f,
+    "f+": arithmetic.xt_r_add,
+    "f-": arithmetic.xt_r_sub,
+    "f*": fixed_point.xt_r_f_mul,
+    'f/': fixed_point.xt_r_f_div,
 }

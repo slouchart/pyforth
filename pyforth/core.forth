@@ -8,6 +8,8 @@ variable base
 decimal
 -1 constant true
 0 constant false
+variable precision
+5 precision !
 
 : 1+ 1 + ;
 : negate 0 swap - ;
