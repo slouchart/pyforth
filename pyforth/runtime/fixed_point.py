@@ -1,6 +1,8 @@
+import decimal
 import sys
+from decimal import Decimal, InvalidOperation, setcontext, getcontext
 
-from pyforth.core import State
+from pyforth.core import State, WORD, ForthCompilationError
 from .utils import pass_state_only
 
 
@@ -21,6 +23,21 @@ def fp_to_str(f: int, precision: int) -> str:
     fmt: str = '{:0' + str(precision) + 'd}'
     result: str = ('-' if negative else '') + str(int_p) + '.' + fmt.format(frac_p)
     return result
+
+
+def parse_to_fp(word: WORD, precision: int) -> int:
+    old_prec = getcontext().prec
+    result: Decimal | None = None
+    try:
+        getcontext().prec = precision
+        result = Decimal(word)
+    except InvalidOperation as exc:
+        raise ForthCompilationError(str(exc)) from None
+    finally:
+        getcontext().prec = old_prec
+
+    if result is not None:
+        return int((result * 10**precision).to_integral_value(rounding=decimal.ROUND_HALF_EVEN))
 
 
 @pass_state_only
