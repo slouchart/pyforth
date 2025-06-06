@@ -1,6 +1,6 @@
 import decimal
 import sys
-from decimal import Decimal, InvalidOperation, setcontext, getcontext
+from decimal import Decimal, InvalidOperation, getcontext
 
 from pyforth.core import State, WORD, ForthCompilationError
 from .utils import pass_state_only
@@ -27,7 +27,7 @@ def fp_to_str(f: int, precision: int) -> str:
 
 def parse_to_fp(word: WORD, precision: int) -> int:
     old_prec = getcontext().prec
-    result: Decimal | None = None
+    result: Decimal | None
     try:
         getcontext().prec = precision
         result = Decimal(word)
