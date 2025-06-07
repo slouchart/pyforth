@@ -13,7 +13,7 @@ def xt_r_create(state: State) -> None:
 def xt_r_does(state: State, code: DEFINED_XT_R, p: POINTER) -> POINTER:
     assert isinstance(state.runtime_execution_tokens[state.last_created_word], list)
     xt_r: DEFINED_XT_R = cast(DEFINED_XT_R, state.runtime_execution_tokens[state.last_created_word])
-    xt_r += code[p:]  # rest of words belong to created words runtime
+    xt_r += code[p:]  # rest of words belong to created word runtime
     return len(code)  # jump p over these
 
 
