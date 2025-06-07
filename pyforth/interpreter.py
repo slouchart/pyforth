@@ -211,19 +211,19 @@ class Interpreter:
 
     def interpret(self, word: WORD) -> None:
 
+        # loop as in https://www.forth.org/lost-at-c.html [figure 1.]
         found, immediate, c_xt, r_xt = self._search_word(word)
         if found:
             if immediate:
                 assert c_xt is not None
                 self._execute_immediate(c_xt)
-            elif self.state.is_compiling:
+            elif self.state.is_compiling:  #  state entered with : and exited by ;
                 assert r_xt is not None
                 self.state.current_definition += self._compile_address(word, r_xt)
             else:
                 assert r_xt is not None
                 self._execute_immediate(r_xt)
         else:
-            # Number to be pushed onto ds at runtime
             if self.is_literal(word):
                 action: DEFINED_XT = [push, self.state.word_to_int(word)]
                 if self.state.is_compiling:
