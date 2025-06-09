@@ -1,8 +1,7 @@
 from pyforth.core import POINTER, State
 
 from pyforth.runtime import primitives
-from pyforth.runtime.utils import compiling_word
-from pyforth.compiler.utils import fatal, set_exit_jmp_address
+from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address
 
 
 @compiling_word

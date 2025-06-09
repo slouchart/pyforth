@@ -1,9 +1,37 @@
 from pyforth.core import WORD, XT
 
-from . import arithmetic, comparison, heap, logical, output, primitives, stacks, fixed_point
+from . import (
+    arithmetic,
+    branching,
+    comparison,
+    doloop,
+    heap,
+    logical,
+    loops,
+    output,
+    primitives,
+    stacks,
+    fixed_point
+)
 
 
-runtime_execution_tokens: dict[WORD, XT] = {
+execution_tokens: dict[WORD, XT] = {
+    ":": primitives.xt_c_colon,
+    ";": primitives.xt_c_semi,
+    "if": branching.xt_c_if,
+    "else": branching.xt_c_else,
+    "then": branching.xt_c_then,
+    "begin": loops.xt_c_begin,
+    'again': loops.xt_c_again,
+    "until": loops.xt_c_until,
+    "while": loops.xt_c_while,
+    "repeat": loops.xt_c_repeat,
+    "do": doloop.xt_c_do,
+    "loop": doloop.xt_c_loop,
+    'exit': primitives.xt_c_exit,
+    'i': doloop.loop_index_factory(1, 'i'),
+    'j': doloop.loop_index_factory(2, 'j'),
+    'k': doloop.loop_index_factory(3, 'k'),
     "+": arithmetic.xt_r_add,
     "-": arithmetic.xt_r_sub,
     "/": arithmetic.xt_r_div,

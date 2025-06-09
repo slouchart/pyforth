@@ -1,7 +1,6 @@
 from pyforth.core import POINTER, State
-from pyforth.compiler.utils import fatal
 from pyforth.runtime import primitives
-from pyforth.runtime.utils import compiling_word
+from pyforth.runtime.utils import compiling_word, fatal
 
 
 @compiling_word

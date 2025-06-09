@@ -1,10 +1,8 @@
 from typing import Final
 
 from pyforth.core import POINTER, State, CONTROL_STACK, XT
-from pyforth.compiler.utils import fatal, set_exit_jmp_address
-
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
-from pyforth.runtime.utils import compiling_word
+from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address
 
 
 def _current_nested_count(cs: CONTROL_STACK) -> int:

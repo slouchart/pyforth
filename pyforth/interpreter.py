@@ -3,31 +3,11 @@ import re
 from pathlib import Path
 from typing import cast, Sequence
 
-from .compiler import primitives, branching, loops, doloop
-from .compiler.utils import fatal
+from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT
 from .core import ForthCompilationError, State
-from .runtime import runtime_execution_tokens, execute, push
+from .runtime import execution_tokens, execute, push
 
-
-_compilation_tokens: dict[WORD, XT] = {
-    ":": primitives.xt_c_colon,
-    ";": primitives.xt_c_semi,
-    "if": branching.xt_c_if,
-    "else": branching.xt_c_else,
-    "then": branching.xt_c_then,
-    "begin": loops.xt_c_begin,
-    'again': loops.xt_c_again,
-    "until": loops.xt_c_until,
-    "while": loops.xt_c_while,
-    "repeat": loops.xt_c_repeat,
-    "do": doloop.xt_c_do,
-    "loop": doloop.xt_c_loop,
-    'exit': primitives.xt_c_exit,
-    'i': doloop.loop_index_factory(1, 'i'),
-    'j': doloop.loop_index_factory(2, 'j'),
-    'k': doloop.loop_index_factory(3, 'k'),
-}
 
 
 class _InterpreterState(State):
@@ -64,8 +44,8 @@ class _InterpreterState(State):
         return word
 
     @property
-    def runtime_execution_tokens(self) -> dict[WORD, XT]:
-        return runtime_execution_tokens
+    def execution_tokens(self) -> dict[WORD, XT]:
+        return execution_tokens
 
     def tokenize(self, s):
         """clip comments, split to list of words
@@ -181,7 +161,7 @@ class Interpreter:
 
     @property
     def words(self) -> Sequence[WORD]:
-        return list(runtime_execution_tokens) + list(_compilation_tokens)
+        return list(execution_tokens)
 
     @property
     def data_stack(self) -> DATA_STACK:
@@ -212,17 +192,17 @@ class Interpreter:
     def interpret(self, word: WORD) -> None:
 
         # loop as in https://www.forth.org/lost-at-c.html [figure 1.]
-        found, immediate, c_xt, r_xt = self._search_word(word)
+        found, immediate, xt = self._search_word(word)
         if found:
             if immediate:
-                assert c_xt is not None
-                self._execute_immediate(c_xt)
+                assert xt is not None
+                self._execute_immediate(xt)
             elif self.state.is_compiling:  #  state entered with : and exited by ;
-                assert r_xt is not None
-                self.state.current_definition += self._compile_address(word, r_xt)
+                assert xt is not None
+                self.state.current_definition += self._compile_address(word, xt)
             else:
-                assert r_xt is not None
-                self._execute_immediate(r_xt)
+                assert xt is not None
+                self._execute_immediate(xt)
         else:
             if self.is_literal(word):
                 action: DEFINED_XT = [push, self.state.word_to_int(word)]
@@ -253,14 +233,13 @@ class Interpreter:
         self.state.reset_execution_context()
 
     @staticmethod
-    def _search_word(word: WORD) -> tuple[bool, bool, XT | None, XT | None]:
+    def _search_word(word: WORD) -> tuple[bool, bool, XT | None]:
 
-        c_xt: XT | None = _compilation_tokens.get(word)  # Is there a compile time action ?
-        r_xt: XT | None = runtime_execution_tokens.get(word)  # Is there a runtime action ?
+        xt: XT | None = execution_tokens.get(word)
 
-        found: bool = c_xt is not None or r_xt is not None
-        immediate: bool = c_xt is not None
-        return found, immediate, c_xt, r_xt
+        found: bool = xt is not None
+        immediate: bool = xt is not None and hasattr(xt, '_immediate') and getattr(xt, '_immediate') is True
+        return found, immediate, xt
 
     @staticmethod
     def _compile_address(word: WORD, xt_r: XT) -> DEFINED_XT:
