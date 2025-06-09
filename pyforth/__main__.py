@@ -1,7 +1,7 @@
 import io
 import sys
 
-from .interpreter import Interpreter
+from pyforth.interpreter import Interpreter
 
 
 if __name__ == "__main__":

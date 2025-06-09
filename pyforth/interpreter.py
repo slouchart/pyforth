@@ -37,7 +37,7 @@ class _InterpreterState(State):
 
     def wait_for_input(self) -> Generator[str]:
         while True:
-            if self.interactive and not self._input_buffer:
+            if self.interactive and len(self._input_buffer.strip()) == 0:
                 if self.stop_waiting_for_input:
                     raise StopIteration
                 _raw_input = input(self.prompt) + " "
@@ -149,8 +149,10 @@ class Interpreter:
             code: str = ' '.join(stream.readlines())
             interactive_flag = self.state.interactive
             self.state.interactive = False
+            self.state.stop_waiting_for_input = True
             self.run(input_code=code)
             self.state.interactive = interactive_flag
+            self.state.stop_waiting_for_input = not self.state.interactive
 
     def __init__(self, interactive: bool = True) -> None:
         self.state: _InterpreterState = _InterpreterState(parent=self, interactive=interactive)
@@ -192,14 +194,14 @@ class Interpreter:
             try:
                 word: WORD = self.state.next_word()
                 if not word:
-                    raise StopIteration
+                    break
                 self.interpret(word)
             except StopIteration:
                 return None
             except ForthCompilationError as condition:
                 if self.state.interactive:
                     print(condition)
-                    break
+                    continue
                 raise condition from None
 
     def interpret(self, word: WORD) -> None:

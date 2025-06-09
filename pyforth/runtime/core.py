@@ -71,7 +71,7 @@ dictionary: dict[WORD, XT] = {
     "f-": arithmetic.xt_r_sub,
     "f*": fixed_point.xt_r_f_mul,
     'f/': fixed_point.xt_r_f_div,
-    ".\"": strings.xt_r_dot_quote,
-    "s\"": strings.xt_r_s_quote,
+    ".\"": strings.xt_c_dot_quote,
+    "s\"": strings.xt_c_s_quote,
     "type": strings.xt_r_type,
 }
