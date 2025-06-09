@@ -1,3 +1,4 @@
+import sys
 from functools import wraps
 from typing import Callable, Optional, Any
 
@@ -8,6 +9,17 @@ from pyforth.core import ForthCompilationError
 
 def fatal(msg: str) -> None:
     raise ForthCompilationError(msg)
+
+
+def flush_stdout(func: NATIVE_XT) -> NATIVE_XT:
+    @wraps(func)
+    def wrapper(state: State) -> None:
+        func(state)
+        if state.interactive:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
+    return wrapper
 
 
 def set_exit_jmp_address(exit_: tuple[WORD, POINTER] | tuple[()], code: DEFINED_XT) -> None:

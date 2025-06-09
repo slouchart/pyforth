@@ -1,1 +1,1 @@
-from .tokens import execution_tokens
+from .core import dictionary

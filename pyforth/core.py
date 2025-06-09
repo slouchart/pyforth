@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from typing import TypeAlias, Optional, TypeVar, Generic
 
 T = TypeVar('T')
@@ -30,16 +30,13 @@ class ForthCompilationError(BaseException):
 
 class State(ABC):
 
-    input_code: str = ''
     ds: DATA_STACK = []
     rs: RETURN_STACK = []
     control_stack: CONTROL_STACK = []
     heap: list[LITERAL] = [0] * 20
     next_heap_address: int = 0
-    words: Sequence[WORD] = []
     last_created_word: WORD = ''
     current_definition: DefinedExecutionToken = DefinedExecutionToken()
-    prompt: str = ""
     interactive: bool = False
 
     def set_compile_flag(self) -> None: ...
@@ -69,10 +66,10 @@ class State(ABC):
     def execution_tokens(self) -> dict[WORD, XT]: ...
 
     @abstractmethod
-    def next_word(self) -> WORD: ...
+    def next_char(self) -> str: ...
 
     @abstractmethod
-    def tokenize(self, s) -> None: ...
+    def next_word(self) -> WORD: ...
 
     @abstractmethod
     def execute_as(self, code: DefinedExecutionToken) -> None: ...

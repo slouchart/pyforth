@@ -11,11 +11,12 @@ from . import (
     output,
     primitives,
     stacks,
-    fixed_point
+    fixed_point,
+    strings,
 )
 
 
-execution_tokens: dict[WORD, XT] = {
+dictionary: dict[WORD, XT] = {
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
     "postpone": primitives.xt_c_postpone,
@@ -70,4 +71,6 @@ execution_tokens: dict[WORD, XT] = {
     "f-": arithmetic.xt_r_sub,
     "f*": fixed_point.xt_r_f_mul,
     'f/': fixed_point.xt_r_f_div,
+    ".\"": strings.xt_r_dot_quote,
+    "s\"": strings.xt_r_s_quote,
 }

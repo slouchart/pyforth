@@ -1,13 +1,13 @@
 from __future__ import annotations
 import re
 from pathlib import Path
-from typing import cast, Sequence
+from typing import cast, Sequence, Generator
 
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken
 from .core import ForthCompilationError, State
-from .runtime import execution_tokens
+from .runtime import dictionary
 from .runtime.primitives import xt_r_push
 
 
@@ -19,41 +19,52 @@ class _InterpreterState(State):
         prompt="... ",
         interactive: bool = True
     ):
-        self.input_code: str = input_code
         self.prompt: str = prompt
         self.interpreter: Interpreter = parent
         self.interactive: bool = interactive
         self._is_compiling: bool = False  # set by colon, reset by semicolon
         self._execution_contextes: list[list[DEFINED_XT | POINTER]] = []
+        self._input_buffer: str = input_code
+        self.stop_waiting_for_input: bool = not self.interactive
+
+    @property
+    def input_code(self) -> str:
+        return self._input_buffer
+
+    @input_code.setter
+    def input_code(self, value: str) -> None:
+        self._input_buffer = value + ' '
+
+    def wait_for_input(self) -> Generator[str]:
+        while True:
+            if self.interactive and not self._input_buffer:
+                if self.stop_waiting_for_input:
+                    raise StopIteration
+                _raw_input = input(self.prompt) + " "
+                self._input_buffer += _raw_input
+            yield self._input_buffer
+
+    def next_char(self) -> str:
+        s: str = next(self.wait_for_input())
+        s, self._input_buffer = s[0], s[1:]
+        return s
 
     def next_word(self) -> WORD:
-        while not self.words:
-            if self.input_code:
-                lin = self.input_code
-                self.input_code = ""
-            else:
-                if self.interactive:
-                    lin = input(self.prompt) + " "
-                else:
-                    lin = "bye"
-            self.tokenize(lin)
+        word: WORD = ''
+        s: str = next(self.wait_for_input())
+        match = re.match(r'\s*(\S+)\s+', s)
+        if match is not None:
+            word = match.group(1).lower().strip()
+            self._input_buffer = self._input_buffer[match.span()[1]:]
+            if word == "bye":
+                self.stop_waiting_for_input = True
+                raise StopIteration
 
-        word = self.words[0]
-        if word == "bye":
-            raise StopIteration
-        self.words = self.words[1:]
         return word
 
     @property
     def execution_tokens(self) -> dict[WORD, XT]:
-        return execution_tokens
-
-    def tokenize(self, s):
-        """clip comments, split to list of words
-        """
-        self.words += (
-            re.sub("#.*\n", "\n", s + "\n").lower().split()
-        )  # Use "#" for comment to end of line
+        return dictionary
 
     def execute_as(self, code: DEFINED_XT) -> None:
         self.interpreter.execute(code)
@@ -152,7 +163,6 @@ class Interpreter:
         self.state.ds = []
         self.state.rs = []
         self.state.control_stack = []
-        self.state.words = []
         self.state.last_created_word = ''
         self.state.next_heap_address = self._heap_fence
         self.state.prompt = "Forth> "
@@ -162,7 +172,7 @@ class Interpreter:
 
     @property
     def words(self) -> Sequence[WORD]:
-        return list(execution_tokens)
+        return list(dictionary)
 
     @property
     def data_stack(self) -> DATA_STACK:
@@ -181,6 +191,8 @@ class Interpreter:
         while True:
             try:
                 word: WORD = self.state.next_word()
+                if not word:
+                    raise StopIteration
                 self.interpret(word)
             except StopIteration:
                 return None
@@ -193,7 +205,7 @@ class Interpreter:
     def interpret(self, word: WORD) -> None:
 
         # loop as in https://www.forth.org/lost-at-c.html [figure 1.]
-        found, immediate, xt = search_word(execution_tokens, word)
+        found, immediate, xt = search_word(dictionary, word)
         if found:
             if immediate:
                 assert xt is not None

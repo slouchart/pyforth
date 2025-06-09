@@ -6,7 +6,7 @@ import pytest
         (
             """
             : ENDIF postpone then ; immediate
-            : main true if 79 emit 107 emit endif ;  # write 'Ok' on stdout
+            : main true if 79 emit 107 emit endif ; 
             main
             """, "Ok"
         )

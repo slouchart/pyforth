@@ -3,15 +3,14 @@ import sys
 from decimal import Decimal, InvalidOperation, getcontext
 
 from pyforth.core import State, WORD, ForthCompilationError
+from .utils import flush_stdout
 
 
+@flush_stdout
 def xt_r_dot_f(state: State) -> None:
     value: int = state.ds.pop()
     precision: int = state.precision
     sys.stdout.write(fp_to_str(value, precision))
-    if state.interactive:
-        sys.stdout.write("\n")
-        sys.stdout.flush()
 
 
 def fp_to_str(f: int, precision: int) -> str:
