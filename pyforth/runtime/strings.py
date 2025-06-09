@@ -21,6 +21,16 @@ def xt_r_s_quote(state: State) -> None:
     state.ds.append(len(value))
 
 
+@flush_stdout
+def xt_r_type(state: State) -> None:
+    count: int = state.ds.pop()
+    addr: int = state.ds.pop()
+    s: str = ''
+    for inx in range(addr+1, addr+count+1):
+        s += chr(state.heap[inx])
+    sys.stdout.write(s)
+
+
 def parse_string(state: State) -> str:
     c: str = state.next_char()
     s: str = ''
