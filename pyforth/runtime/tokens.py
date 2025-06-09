@@ -18,6 +18,8 @@ from . import (
 execution_tokens: dict[WORD, XT] = {
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
+    "postpone": primitives.xt_c_postpone,
+    "immediate": primitives.xt_r_immediate,
     "if": branching.xt_c_if,
     "else": branching.xt_c_else,
     "then": branching.xt_c_then,

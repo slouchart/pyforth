@@ -1,12 +1,12 @@
 from typing import cast
-from pyforth.core import DEFINED_XT, POINTER, LITERAL, State, WORD, ForthCompilationError
+from pyforth.core import DefinedExecutionToken, DEFINED_XT, POINTER, LITERAL, State, WORD, ForthCompilationError, XT
 from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address
 
 
 def xt_r_create(state: State) -> None:
     state.last_created_word = label = state.next_word()
     # when created word is run, pushes its address
-    state.execution_tokens[label] = [xt_r_push, state.next_heap_address]
+    state.execution_tokens[label] = DefinedExecutionToken([xt_r_push, state.next_heap_address])
 
 
 def xt_r_does(state: State) -> POINTER:
@@ -23,7 +23,8 @@ def xt_r_jmp(state: State) -> POINTER:
 def xt_r_jz(state: State) -> POINTER:
     return (
         cast(POINTER, state.loaded_code[state.instruction_pointer]),
-        state.instruction_pointer + 1)[state.ds.pop()]
+        state.instruction_pointer + 1
+    )[state.ds.pop()]
 
 
 def xt_r_jnz(state: State) -> POINTER:
@@ -68,7 +69,7 @@ def xt_c_colon(state: State) -> None:
     label = state.next_word()
     state.control_stack.append(("COLON", label, ()))  # flag for following ";"
     state.set_compile_flag()  # enter "compile" mode
-    state.current_definition = []  # prepare code definition
+    state.current_definition = DefinedExecutionToken()  # prepare code definition
 
 
 @compiling_word
@@ -81,8 +82,9 @@ def xt_c_semi(state: State) -> None:
     if word != "COLON":
         fatal(": not balanced with ;")
     assert isinstance(label, str)
+    state.last_created_word = label
     set_exit_jmp_address(exit_, state.current_definition)
-    state.execution_tokens[label] = state.current_definition[:]  # Save word definition in rDict
+    state.execution_tokens[label] = DefinedExecutionToken(state.current_definition[:]) # Save word definition in rDict
     state.current_definition.clear()
     state.reset_compile_flag()
 
@@ -105,3 +107,45 @@ def xt_c_exit(state: State) -> None:
             _code.append(0)
 
     _exit(state, state.current_definition)
+
+
+@compiling_word
+def xt_c_postpone(state: State) -> None:
+    if not state.is_compiling:
+        fatal("POSTPONE: Not in compile mode")
+    word: WORD = state.next_word()
+    xt: XT | None = state.execution_tokens.get(word)
+    if xt is None:
+        fatal(f"POSTPONE: unknown word {word!r}")
+    assert xt is not None  # so mypy is happy...
+    state.current_definition += compile_address(word, xt)
+
+
+def xt_r_immediate(state: State) -> None:
+    if state.is_compiling:
+        fatal("IMMEDIATE: In compile mode")
+    word: WORD = state.last_created_word
+    xt: XT | None = state.execution_tokens.get(word)
+    if xt is None:
+        fatal(f"IMMEDIATE: unknown word {word!r}")
+    setattr(xt, '_immediate', True)
+
+
+def search_word(words: dict[WORD, XT], word: WORD) -> tuple[bool, bool, XT | None]:
+
+    xt: XT | None = words.get(word)
+
+    found: bool = xt is not None
+    immediate: bool = xt is not None and hasattr(xt, '_immediate') and getattr(xt, '_immediate') is True
+    return found, immediate, xt
+
+
+def compile_address(word: WORD, xt_r: XT) -> DEFINED_XT:
+    if isinstance(xt_r, list):
+        return deferred_definition(word)
+
+    return DefinedExecutionToken([xt_r, ])  # push builtin for runtime
+
+
+def deferred_definition(word: WORD) -> DEFINED_XT:
+    return DefinedExecutionToken([xt_r_run, word])

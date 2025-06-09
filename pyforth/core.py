@@ -1,6 +1,14 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import TypeAlias, Optional
+from typing import TypeAlias, Optional, TypeVar, Generic
+
+T = TypeVar('T')
+
+class DefinedExecutionToken(Generic[T], list):
+    """Needed to set an _immediate attribute to True/False"""
+    pass
 
 
 WORD: TypeAlias = str
@@ -12,7 +20,7 @@ RETURN_STACK = STACK[LITERAL]
 CONTROL_STRUCT = tuple[WORD, POINTER | WORD, tuple[WORD, POINTER] | tuple[()]]
 CONTROL_STACK = STACK[CONTROL_STRUCT]
 NATIVE_XT = Callable[["State"], Optional[POINTER]]
-DEFINED_XT = list[NATIVE_XT | LITERAL | WORD]
+DEFINED_XT: TypeAlias = DefinedExecutionToken[NATIVE_XT | LITERAL | WORD]
 XT = NATIVE_XT | DEFINED_XT
 
 
@@ -30,7 +38,7 @@ class State(ABC):
     next_heap_address: int = 0
     words: Sequence[WORD] = []
     last_created_word: WORD = ''
-    current_definition: DEFINED_XT = []
+    current_definition: DefinedExecutionToken = DefinedExecutionToken()
     prompt: str = ""
     interactive: bool = False
 
@@ -67,7 +75,7 @@ class State(ABC):
     def tokenize(self, s) -> None: ...
 
     @abstractmethod
-    def execute_as(self, code: DEFINED_XT) -> None: ...
+    def execute_as(self, code: DefinedExecutionToken) -> None: ...
 
     @property
     @abstractmethod
@@ -78,4 +86,4 @@ class State(ABC):
 
     @property
     @abstractmethod
-    def loaded_code(self) -> DEFINED_XT: ...
+    def loaded_code(self) -> DefinedExecutionToken: ...

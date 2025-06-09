@@ -5,6 +5,7 @@ from pyforth.core import DEFINED_XT, NATIVE_XT, POINTER, STACK, State, WORD
 from pyforth.core import ForthCompilationError
 
 
+
 def fatal(msg: str) -> None:
     raise ForthCompilationError(msg)
 

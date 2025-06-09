@@ -3,11 +3,12 @@ import re
 from pathlib import Path
 from typing import cast, Sequence
 
+from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
-from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT
+from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken
 from .core import ForthCompilationError, State
-from .runtime import execution_tokens, execute, push
-
+from .runtime import execution_tokens
+from .runtime.primitives import xt_r_push
 
 
 class _InterpreterState(State):
@@ -157,7 +158,7 @@ class Interpreter:
         self.state.prompt = "Forth> "
 
         assert not self.state.is_compiling
-        self.state.current_definition = []
+        self.state.current_definition = DefinedExecutionToken()
 
     @property
     def words(self) -> Sequence[WORD]:
@@ -192,27 +193,27 @@ class Interpreter:
     def interpret(self, word: WORD) -> None:
 
         # loop as in https://www.forth.org/lost-at-c.html [figure 1.]
-        found, immediate, xt = self._search_word(word)
+        found, immediate, xt = search_word(execution_tokens, word)
         if found:
             if immediate:
                 assert xt is not None
                 self._execute_immediate(xt)
             elif self.state.is_compiling:  #  state entered with : and exited by ;
                 assert xt is not None
-                self.state.current_definition += self._compile_address(word, xt)
+                self.state.current_definition += compile_address(word, xt)
             else:
                 assert xt is not None
                 self._execute_immediate(xt)
         else:
             if self.is_literal(word):
-                action: DEFINED_XT = [push, self.state.word_to_int(word)]
+                action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self.state.word_to_int(word)])
                 if self.state.is_compiling:
                     self.state.current_definition += action
                 else:
                     self.execute(action)
             else:  # defer
                 if self.state.is_compiling:
-                    self.state.current_definition += self._deferred_definition(word)
+                    self.state.current_definition += deferred_definition(word)
                 else:
                     fatal(f"Unknown word: {word!r}")
 
@@ -231,23 +232,3 @@ class Interpreter:
             if new_inst_ptr is not None:
                 self.state.set_instruction_pointer(new_inst_ptr)
         self.state.reset_execution_context()
-
-    @staticmethod
-    def _search_word(word: WORD) -> tuple[bool, bool, XT | None]:
-
-        xt: XT | None = execution_tokens.get(word)
-
-        found: bool = xt is not None
-        immediate: bool = xt is not None and hasattr(xt, '_immediate') and getattr(xt, '_immediate') is True
-        return found, immediate, xt
-
-    @staticmethod
-    def _compile_address(word: WORD, xt_r: XT) -> DEFINED_XT:
-        if isinstance(xt_r, list):
-            return Interpreter._deferred_definition(word)
-
-        return [xt_r, ]  # push builtin for runtime
-
-    @staticmethod
-    def _deferred_definition(word: WORD) -> DEFINED_XT:
-        return [execute, word]
