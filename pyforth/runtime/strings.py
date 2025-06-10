@@ -1,7 +1,11 @@
 import sys
+from typing import Final
 
 from pyforth.core import State, LITERAL, POINTER
 from .utils import flush_stdout, compiling_word
+
+
+QUOTE: Final[str] = r'"'
 
 
 @compiling_word
@@ -41,16 +45,14 @@ def xt_c_s_quote(state: State) -> None:
 def xt_r_type(state: State) -> None:
     count: LITERAL = state.ds.pop()
     addr: POINTER = state.ds.pop()
-    s: str = ''
-    for inx in range(addr, addr+count):
-        s += chr(state.heap[inx])
+    s: str = ''.join(chr(state.heap[inx]) for inx in range(addr, addr+count))
     sys.stdout.write(s)
 
 
 def parse_string(state: State) -> str:
     c: str = state.next_char()
     s: str = ''
-    while c and c != '"':
+    while c and c != QUOTE:
         s += c
         c = state.next_char()
     return s
