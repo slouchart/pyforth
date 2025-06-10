@@ -131,6 +131,25 @@ def xt_r_immediate(state: State) -> None:
     setattr(xt, '_immediate', True)
 
 
+@compiling_word
+def xt_c_recurse(state: State) -> None:
+    if not state.is_compiling:
+        fatal("RECURSE outside definition")
+
+    index: int = 1
+    current_def: WORD = ''
+    while index <= len(state.control_stack):
+        colon, word, *_ = state.control_stack[-index]
+        if colon == 'COLON':
+            current_def = word
+            break
+        index += 1
+    else:
+        fatal(f"RECURSE: control stack error")
+
+    state.current_definition += [xt_r_run, current_def]
+
+
 def search_word(words: dict[WORD, XT], word: WORD) -> tuple[bool, bool, XT | None]:
 
     xt: XT | None = words.get(word)

@@ -3,7 +3,6 @@ Backlog
 * reduce the number of primitives, aim to define compiling words as DEFINED_XT
 * upload project on github
 * implement fixed points functions FEXP, FLN, FLOG, FSINCOS, FATAN2 using CORDIC techniques
-* implement RECURSE
 * test memory management (arrays & strings)
 
 

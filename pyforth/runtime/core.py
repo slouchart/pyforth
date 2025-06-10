@@ -24,6 +24,7 @@ dictionary: dict[WORD, XT] = {
     ";": primitives.xt_c_semi,
     "postpone": primitives.xt_c_postpone,
     "immediate": primitives.xt_r_immediate,
+    "recurse": primitives.xt_c_recurse,
     "if": branching.xt_c_if,
     "else": branching.xt_c_else,
     "then": branching.xt_c_then,
