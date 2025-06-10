@@ -26,6 +26,7 @@ def xt_c_do(state: State) -> None:
 
 @compiling_word
 def xt_c_loop(state: State) -> None:
+
     if not state.is_compiling:
         fatal("LOOP: not in compile mode")
     if not state.control_stack:
@@ -50,7 +51,7 @@ def xt_c_loop(state: State) -> None:
 
     set_exit_jmp_address(exit_, code)
     code += [
-        stacks.xt_r_from_rs,  # LOOP cleanup
+        stacks.xt_r_from_rs,  # UN-LOOP
         stacks.xt_r_from_rs,
         stacks.xt_r_drop,
         stacks.xt_r_drop,

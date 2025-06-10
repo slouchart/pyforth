@@ -1,3 +1,4 @@
+\ Forth is written in Forth
 : variable create 0 , ;
 : constant create , does> @ ;
 : cells 1 * ;

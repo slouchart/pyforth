@@ -1,7 +1,8 @@
 Backlog
 
-* reduce the number of primitives, aim to define compiling words as DEFINED_XT
 * upload project on github
+* refactoring: reduce the number of primitives, aim to define compiling words as DEFINED_XT
+  candidates: BEGIN, IF, ELSE, THEN, AGAIN, WHILE, REPEAT, UNTIL, DO, LOOP
 * implement fixed points functions FEXP, FLN, FLOG, FSINCOS, FATAN2 using CORDIC techniques
 * test memory management (arrays & strings)
 
