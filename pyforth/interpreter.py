@@ -1,7 +1,7 @@
 from __future__ import annotations
 import re
 from pathlib import Path
-from typing import cast, Sequence, Generator
+from typing import cast, Sequence, Generator, Final
 
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
@@ -13,20 +13,29 @@ from .runtime.primitives import xt_r_push
 
 
 class _InterpreterState(State):
+
+    _DEFAULT_PROMPT: Final[str] = 'Forth> '
+    _CONTINUATION_PROMPT: Final[str] = '... '
+
     def __init__(
         self,
         parent: Interpreter,
         input_code: str = '',
-        prompt="... ",
-        interactive: bool = True
     ):
-        self.prompt: str = prompt
-        self.interpreter: Interpreter = parent
-        self.interactive: bool = interactive
+        self._prompt: str = self._DEFAULT_PROMPT
+        self._interpreter: Interpreter = parent
+        self._interactive: bool = False
         self._is_compiling: bool = False  # set by colon, reset by semicolon
         self._execution_contextes: list[list[DEFINED_XT | POINTER]] = []
         self._input_buffer: str = input_code
-        self.stop_waiting_for_input: bool = not self.interactive
+
+    @property
+    def interactive(self) -> bool:
+        return self._interactive
+
+    @interactive.setter
+    def interactive(self, flag: bool) -> None:
+        self._interactive = flag
 
     @property
     def input_code(self) -> str:
@@ -39,9 +48,7 @@ class _InterpreterState(State):
     def wait_for_input(self) -> Generator[str]:
         while True:
             if self.interactive and len(self._input_buffer.strip()) == 0:
-                if self.stop_waiting_for_input:
-                    raise StopIteration
-                _raw_input = input(self.prompt) + " \n"
+                _raw_input: str = input(self._prompt) + " \n"
                 self._input_buffer += _raw_input
             yield self._input_buffer
 
@@ -58,8 +65,10 @@ class _InterpreterState(State):
             word = match.group(1).lower().strip()
             self._input_buffer = self._input_buffer[match.span()[1]:]
             if word == "bye":
-                self.stop_waiting_for_input = True
                 raise StopIteration
+
+        if not word and not self._interactive:
+            raise StopIteration
 
         return word
 
@@ -68,7 +77,7 @@ class _InterpreterState(State):
         return dictionary
 
     def execute_as(self, code: DEFINED_XT) -> None:
-        self.interpreter.execute(code)
+        self._interpreter.execute(code)
 
     @property
     def base(self) -> int:
@@ -95,12 +104,12 @@ class _InterpreterState(State):
     def set_compile_flag(self) -> None:
         assert not self.is_compiling
         self._is_compiling = True
-        self.prompt = "...    "
+        self._prompt = self._CONTINUATION_PROMPT
 
     def reset_compile_flag(self) -> None:
         assert self.is_compiling
         self._is_compiling = False
-        self.prompt = "Forth> "
+        self._prompt = self._DEFAULT_PROMPT
 
     @property
     def is_compiling(self) -> bool:
@@ -148,15 +157,11 @@ class Interpreter:
         extension_path = Path(__file__).parent / 'core.forth'
         with extension_path.open(mode='r') as stream:
             code: str = ' \n'.join(stream.readlines())
-            interactive_flag = self.state.interactive
             self.state.interactive = False
-            self.state.stop_waiting_for_input = True
             self.run(input_code=code)
-            self.state.interactive = interactive_flag
-            self.state.stop_waiting_for_input = not self.state.interactive
 
-    def __init__(self, interactive: bool = True) -> None:
-        self.state: _InterpreterState = _InterpreterState(parent=self, interactive=interactive)
+    def __init__(self) -> None:
+        self.state: _InterpreterState = _InterpreterState(parent=self)
         self._heap_fence: int = 0
         self._bootstrap()
         self._heap_fence = self.state.next_heap_address  # protect vars & cons defined in bootstrap
@@ -168,7 +173,6 @@ class Interpreter:
         self.state.control_stack = []
         self.state.last_created_word = ''
         self.state.next_heap_address = self._heap_fence
-        self.state.prompt = "Forth> "
 
         assert not self.state.is_compiling
         self.state.current_definition = DefinedExecutionToken()
@@ -185,18 +189,19 @@ class Interpreter:
     def return_stack(self) -> RETURN_STACK:
         return self.state.rs
 
-    def run(self, input_code: str = '') -> None:
+    def run(self, input_code: str = '', interactive: bool = False) -> None:
 
         self.reset()
+        self.state.interactive = interactive
+
         if input_code:
             self.state.input_code = input_code
 
         while True:
             try:
                 word: WORD = self.state.next_word()
-                if not word:
-                    break
-                self.interpret(word)
+                if word:
+                    self.interpret(word)
             except StopIteration:
                 return None
             except (ForthCompilationError, StackUnderflowError) as condition:

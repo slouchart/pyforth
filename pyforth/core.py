@@ -41,7 +41,10 @@ class State(ABC):
     next_heap_address: int = 0
     last_created_word: WORD = ''
     current_definition: DefinedExecutionToken = DefinedExecutionToken()
-    interactive: bool = False
+
+    @property
+    @abstractmethod
+    def interactive(self) -> bool: ...
 
     def set_compile_flag(self) -> None: ...
 

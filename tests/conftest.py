@@ -5,5 +5,5 @@ from pyforth.interpreter import Interpreter
 
 @pytest.fixture(scope='function')
 def interpreter():
-    interpreter = Interpreter(interactive=False)
+    interpreter = Interpreter()
     return interpreter
