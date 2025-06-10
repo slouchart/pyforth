@@ -3,6 +3,7 @@ from pyforth.core import WORD, XT
 from . import (
     arithmetic,
     branching,
+    comments,
     comparison,
     doloop,
     heap,
@@ -17,6 +18,8 @@ from . import (
 
 
 dictionary: dict[WORD, XT] = {
+    "\\": comments.xt_c_eol_comment,
+    "(": comments.xt_c_definition_comment,
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
     "postpone": primitives.xt_c_postpone,
@@ -44,6 +47,7 @@ dictionary: dict[WORD, XT] = {
     "over": stacks.xt_r_over,
     "drop": stacks.xt_r_drop,
     "dup": stacks.xt_r_dup,
+    "pick": stacks.xt_r_pick,
     'rot': stacks.xt_r_rot,
     "swap": stacks.xt_r_swap,
     'emit': output.xt_r_emit,

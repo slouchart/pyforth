@@ -34,3 +34,6 @@ variable precision
 : spaces dup 0<> if 0 do space loop then ;
 : >= < invert ;
 : <= > invert ;
+
+
+: .s depth 0> if depth 0 do i pick . bl emit loop then ;

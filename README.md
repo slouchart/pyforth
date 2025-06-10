@@ -1,8 +1,8 @@
 Backlog
 
-* implement StackUnderflowError
-* implement comments, both styles \ -> <eol> or ( ) 
 * reduce the number of primitives, aim to define compiling words as DEFINED_XT
+* upload project on github
+
 
 References
 

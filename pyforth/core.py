@@ -28,6 +28,10 @@ class ForthCompilationError(BaseException):
     pass
 
 
+class StackUnderflowError(BaseException):
+    pass
+
+
 class State(ABC):
 
     ds: DATA_STACK = []

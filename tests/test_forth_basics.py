@@ -37,7 +37,10 @@ def oracle(interpreter):
         ('1 2 2DUP', '1 2 1 2'),
         ('1 2 3 4 2SWAP', '3 4 1 2'),
         ('1 2 3 4 2DROP', '1 2'),
-        ('1 2 3 4 2OVER', '1 2 3 4 1 2')
+        ('1 2 3 4 2OVER', '1 2 3 4 1 2'),
+        ('1 2 3 4 0 PICK', '1 2 3 4 4'),
+        ('1 2 3 4 1 PICK', '1 2 3 4 3'),
+        ('1 2 3 4 2 PICK', '1 2 3 4 2'),
     ]
 )
 def test_stack_ops(interpreter, program, res, oracle):

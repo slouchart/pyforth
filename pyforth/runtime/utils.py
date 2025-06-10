@@ -1,8 +1,8 @@
 import sys
 from functools import wraps
-from typing import Callable, Optional, Any
+from typing import Callable, Optional, Any, cast
 
-from pyforth.core import DEFINED_XT, NATIVE_XT, POINTER, STACK, State, WORD
+from pyforth.core import DEFINED_XT, NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
 from pyforth.core import ForthCompilationError
 
 
@@ -70,3 +70,16 @@ def compiling_word(func: Callable[[State], None]) -> NATIVE_XT:
     setattr(wrapper, '_immediate', True)
 
     return wrapper
+
+
+def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:
+
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> Any:
+        try:
+            return func(*args, **kwargs)
+        except IndexError as err:
+            if "pop from empty list" in str(err).lower():
+                raise StackUnderflowError("Stack underflow error") from None
+
+    return cast(NATIVE_XT, wrapper)

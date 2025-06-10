@@ -5,7 +5,8 @@ from typing import cast, Sequence, Generator
 
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
-from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken
+from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
+    StackUnderflowError
 from .core import ForthCompilationError, State
 from .runtime import dictionary
 from .runtime.primitives import xt_r_push
@@ -33,14 +34,14 @@ class _InterpreterState(State):
 
     @input_code.setter
     def input_code(self, value: str) -> None:
-        self._input_buffer = value + ' '
+        self._input_buffer = value + ' \n'
 
     def wait_for_input(self) -> Generator[str]:
         while True:
             if self.interactive and len(self._input_buffer.strip()) == 0:
                 if self.stop_waiting_for_input:
                     raise StopIteration
-                _raw_input = input(self.prompt) + " "
+                _raw_input = input(self.prompt) + " \n"
                 self._input_buffer += _raw_input
             yield self._input_buffer
 
@@ -146,7 +147,7 @@ class Interpreter:
     def _bootstrap(self) -> None:
         extension_path = Path(__file__).parent / 'core.forth'
         with extension_path.open(mode='r') as stream:
-            code: str = ' '.join(stream.readlines())
+            code: str = ' \n'.join(stream.readlines())
             interactive_flag = self.state.interactive
             self.state.interactive = False
             self.state.stop_waiting_for_input = True
@@ -198,7 +199,7 @@ class Interpreter:
                 self.interpret(word)
             except StopIteration:
                 return None
-            except ForthCompilationError as condition:
+            except (ForthCompilationError, StackUnderflowError) as condition:
                 if self.state.interactive:
                     print(condition)
                     continue

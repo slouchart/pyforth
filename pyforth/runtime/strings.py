@@ -10,7 +10,7 @@ QUOTE: Final[str] = r'"'
 
 @compiling_word
 def xt_c_dot_quote(state: State) -> None:
-    value: str = parse_string(state)
+    value: str = parse_string(state, until=QUOTE)
 
     @flush_stdout
     def xt_r_dot_quote(*_) -> None:
@@ -24,7 +24,7 @@ def xt_c_dot_quote(state: State) -> None:
 
 @compiling_word
 def xt_c_s_quote(state: State) -> None:
-    value: str = parse_string(state)
+    value: str = parse_string(state, until=QUOTE)
 
     def xt_r_s_quote(_state: State) -> None:
         cells: list[int] = [ord(c) for c in value]
@@ -49,10 +49,10 @@ def xt_r_type(state: State) -> None:
     sys.stdout.write(s)
 
 
-def parse_string(state: State) -> str:
+def parse_string(state: State, until: str) -> str:
     c: str = state.next_char()
     s: str = ''
-    while c and c != QUOTE:
+    while c and c != until:
         s += c
         c = state.next_char()
     return s
