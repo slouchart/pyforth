@@ -32,12 +32,6 @@ def xt_r_drop(ds: STACK) -> None:
 
 @intercept_stack_error
 @pure_stack_operation
-def xt_r_over(ds: STACK) -> None:
-    ds.append(ds[-2])
-
-
-@intercept_stack_error
-@pure_stack_operation
 def xt_r_rot(ds: STACK) -> None:
     first = ds.pop()
     second = ds.pop()

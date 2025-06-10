@@ -1,6 +1,6 @@
 : variable create 0 , ;
 : constant create , does> @ ;
-
+: cells 1 * ;
 variable base
 : binary 2 base ! ;
 : decimal 10 base ! ;
@@ -11,6 +11,9 @@ decimal
 variable precision
 5 precision !
 
+: dup 0 pick ;
+: over 1 pick ;
+: rot >r swap r> swap ;
 : 1+ 1 + ;
 : negate 0 swap - ;
 : abs dup 0 < if negate then ;

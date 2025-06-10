@@ -4,7 +4,8 @@ Backlog
 * upload project on github
 * implement fixed points functions FEXP, FLN, FLOG, FSINCOS, FATAN2 using CORDIC techniques
 * implement RECURSE
-* implement memory management starting with CELLS
+* test memory management (arrays & strings)
+
 
 References
 
