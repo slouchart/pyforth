@@ -1,6 +1,6 @@
-from typing import cast
+from typing import cast, Optional
 from pyforth.core import DefinedExecutionToken, DEFINED_XT, POINTER, LITERAL, State, WORD, ForthCompilationError, XT
-from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address
+from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address, intercept_stack_error
 
 
 def xt_r_create(state: State) -> None:
@@ -141,13 +141,78 @@ def xt_c_recurse(state: State) -> None:
     while index <= len(state.control_stack):
         colon, word, *_ = state.control_stack[-index]
         if colon == 'COLON':
-            current_def = word
+            current_def = cast(WORD, word)
             break
         index += 1
     else:
         fatal(f"RECURSE: control stack error")
 
     state.current_definition += [xt_r_run, current_def]
+
+
+def xt_r_tick(state: State):
+    word: WORD = state.next_word()
+    addr: POINTER | None = get_word_address(state.execution_tokens, word)
+    assert addr is not None
+    state.ds.append(addr)
+
+
+@compiling_word
+def xt_c_bracket_tick(state: State) -> None:
+    raise NotImplementedError
+
+
+@compiling_word
+def xt_c_compile_comma(state: State) -> None:
+    raise NotImplementedError
+
+
+@intercept_stack_error
+def xt_r_execute(state: State) -> Optional[POINTER]:
+    xt_addr: POINTER = state.ds.pop()
+    word_and_xt = get_word_from_address(state.execution_tokens, xt_addr)
+    assert word_and_xt is not None
+    return execute_immediate(state, word_and_xt[1])
+
+
+@compiling_word
+def xt_c_bracket_compile(state: State) -> None:
+    if not state.is_compiling:
+        fatal("[COMPILE] outside definition")
+    word: WORD = state.next_word()
+    state.current_definition += [xt_c_compile, word]
+
+
+@compiling_word
+def xt_c_compile(state: State) -> POINTER:
+    assert state.is_compiling
+    word: WORD = state.loaded_code[state.instruction_pointer]
+    state.current_definition += deferred_definition(word)
+    return state.instruction_pointer + 1
+
+
+def execute_immediate(state: State, func: XT) -> Optional[POINTER]:
+    if isinstance(func, list):
+        return state.execute_as(cast(DEFINED_XT, func))  # TODO needs rework
+    else:
+        assert callable(func)
+        return func(state)
+
+
+def get_word_from_address(words: dict[WORD, XT], addr: POINTER) -> tuple[WORD, XT] | None:
+    for index, (word, xt) in enumerate(words.items()):
+        if index == addr:
+            return word, xt
+    fatal(f"Cannot find word from address: {addr!r}")
+    return None
+
+
+def get_word_address(words: dict[WORD, XT], word: WORD) -> POINTER | None:
+    for addr, (label, xt) in enumerate(words.items()):
+        if label == word:
+            return addr
+    fatal(f"Unknown word: {word!r}")
+    return None
 
 
 def search_word(words: dict[WORD, XT], word: WORD) -> tuple[bool, bool, XT | None]:

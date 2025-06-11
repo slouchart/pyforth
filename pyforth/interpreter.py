@@ -9,7 +9,7 @@ from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD
     StackUnderflowError
 from .core import ForthCompilationError, State
 from .runtime import dictionary
-from .runtime.primitives import xt_r_push
+from .runtime.primitives import xt_r_push, execute_immediate
 
 
 class _InterpreterState(State):
@@ -217,13 +217,13 @@ class Interpreter:
         if found:
             if immediate:
                 assert xt is not None
-                self._execute_immediate(xt)
+                execute_immediate(self.state, xt)
             elif self.state.is_compiling:  #  state entered with : and exited by ;
                 assert xt is not None
                 self.state.current_definition += compile_address(word, xt)
             else:
                 assert xt is not None
-                self._execute_immediate(xt)
+                execute_immediate(self.state, xt)
         else:
             if self.is_literal(word):
                 action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self.state.word_to_int(word)])
@@ -236,13 +236,6 @@ class Interpreter:
                     self.state.current_definition += deferred_definition(word)
                 else:
                     fatal(f"Unknown word: {word!r}")
-
-    def _execute_immediate(self, func: XT) -> None:
-        if isinstance(func, list):
-            self.execute(cast(DEFINED_XT, func))  # TODO needs rework
-        else:
-            assert callable(func)
-            func(self.state)
 
     def execute(self, code: DEFINED_XT) -> None:
         self.state.set_execution_context(code)  # TODO could be a context manager
