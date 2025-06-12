@@ -92,7 +92,7 @@ def test_exit_do_loop(interpreter, program, data_stack, return_stack):
 @pytest.mark.parametrize(
     'program, data_stack, return_stack', [
         pytest.param(': main 4 1 do 3 1 do i j + loop loop ; main ', [2, 3, 3, 4, 4, 5], [],),
-        pytest.param(': main 4 1 do i 3 1 do j loop loop ; main ', [1, 1, 2, 2, 1, 2, 3, 1, 2], [],),
+        pytest.param(': main 4 1 do i 3 1 do j loop loop ; main ', [1, 1, 1, 2, 2, 2, 3, 3, 3], [],),
         (': main 4 1 do 3 1 do 2 1 do i j k + + loop loop loop ; main', [3, 4, 4, 5, 5, 6], [])
     ]
 )

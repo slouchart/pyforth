@@ -2,16 +2,15 @@ import decimal
 import sys
 from decimal import Decimal, InvalidOperation, getcontext
 
-from pyforth.core import State, WORD, ForthCompilationError
+from pyforth.core import State, WORD, ForthCompilationError, POINTER
+from .utils import flush_stdout
 
 
+@flush_stdout
 def xt_r_dot_f(state: State) -> None:
     value: int = state.ds.pop()
     precision: int = state.precision
     sys.stdout.write(fp_to_str(value, precision))
-    if state.interactive:
-        sys.stdout.write("\n")
-        sys.stdout.flush()
 
 
 def fp_to_str(f: int, precision: int) -> str:
@@ -21,6 +20,13 @@ def fp_to_str(f: int, precision: int) -> str:
     fmt: str = '{:0' + str(precision) + 'd}'
     result: str = ('-' if negative else '') + str(int_p) + '.' + fmt.format(frac_p)
     return result
+
+
+def xt_r_f_literal(state: State) -> None:
+    word: WORD = state.next_word()
+    precision: int = state.precision
+    value: int = parse_to_fp(word, precision)
+    state.ds.append(value)
 
 
 def parse_to_fp(word: WORD, precision: int) -> int:

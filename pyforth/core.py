@@ -1,6 +1,14 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
-from typing import TypeAlias, Optional
+from collections.abc import Callable
+from typing import TypeAlias, Optional, TypeVar, Generic
+
+T = TypeVar('T')
+
+class DefinedExecutionToken(Generic[T], list):
+    """Needed to set an _immediate attribute to True/False"""
+    pass
 
 
 WORD: TypeAlias = str
@@ -12,7 +20,7 @@ RETURN_STACK = STACK[LITERAL]
 CONTROL_STRUCT = tuple[WORD, POINTER | WORD, tuple[WORD, POINTER] | tuple[()]]
 CONTROL_STACK = STACK[CONTROL_STRUCT]
 NATIVE_XT = Callable[["State"], Optional[POINTER]]
-DEFINED_XT = list[NATIVE_XT | LITERAL | WORD]
+DEFINED_XT: TypeAlias = DefinedExecutionToken[NATIVE_XT | LITERAL | WORD]
 XT = NATIVE_XT | DEFINED_XT
 
 
@@ -20,19 +28,23 @@ class ForthCompilationError(BaseException):
     pass
 
 
+class StackUnderflowError(BaseException):
+    pass
+
+
 class State(ABC):
 
-    input_code: str = ''
     ds: DATA_STACK = []
     rs: RETURN_STACK = []
     control_stack: CONTROL_STACK = []
     heap: list[LITERAL] = [0] * 20
     next_heap_address: int = 0
-    words: Sequence[WORD] = []
     last_created_word: WORD = ''
-    current_definition: DEFINED_XT = []
-    prompt: str = ""
-    interactive: bool = False
+    current_definition: DefinedExecutionToken = DefinedExecutionToken()
+
+    @property
+    @abstractmethod
+    def interactive(self) -> bool: ...
 
     def set_compile_flag(self) -> None: ...
 
@@ -58,16 +70,16 @@ class State(ABC):
 
     @property
     @abstractmethod
-    def runtime_execution_tokens(self) -> dict[WORD, XT]: ...
+    def execution_tokens(self) -> dict[WORD, XT]: ...
+
+    @abstractmethod
+    def next_char(self) -> str: ...
 
     @abstractmethod
     def next_word(self) -> WORD: ...
 
     @abstractmethod
-    def tokenize(self, s) -> None: ...
-
-    @abstractmethod
-    def execute_as(self, code: DEFINED_XT) -> None: ...
+    def execute_as(self, code: DefinedExecutionToken) -> None: ...
 
     @property
     @abstractmethod
@@ -78,4 +90,4 @@ class State(ABC):
 
     @property
     @abstractmethod
-    def loaded_code(self) -> DEFINED_XT: ...
+    def loaded_code(self) -> DefinedExecutionToken: ...

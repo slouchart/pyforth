@@ -1,10 +1,8 @@
 from typing import Final
 
 from pyforth.core import POINTER, State, CONTROL_STACK, XT
-from pyforth.compiler.utils import fatal, set_exit_jmp_address
-
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
-from pyforth.runtime.utils import compiling_word
+from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address
 
 
 def _current_nested_count(cs: CONTROL_STACK) -> int:
@@ -28,6 +26,7 @@ def xt_c_do(state: State) -> None:
 
 @compiling_word
 def xt_c_loop(state: State) -> None:
+
     if not state.is_compiling:
         fatal("LOOP: not in compile mode")
     if not state.control_stack:
@@ -52,14 +51,11 @@ def xt_c_loop(state: State) -> None:
 
     set_exit_jmp_address(exit_, code)
     code += [
-        stacks.xt_r_from_rs,  # LOOP cleanup
+        stacks.xt_r_from_rs,  # UN-LOOP
         stacks.xt_r_from_rs,
         stacks.xt_r_drop,
         stacks.xt_r_drop,
     ]
-
-
-MAX_NESTED_LOOPS: Final[int] = 3
 
 
 def loop_index_factory(expected_nested_level: int, index_word: str) -> XT:
@@ -68,18 +64,19 @@ def loop_index_factory(expected_nested_level: int, index_word: str) -> XT:
 
         if not state.is_compiling:
             fatal("INDEX: not in compile mode")
+
         nb_nested_do_loops: int = _current_nested_count(state.control_stack)
 
-        if MAX_NESTED_LOOPS < nb_nested_do_loops < expected_nested_level:
+        if nb_nested_do_loops < expected_nested_level:
             fatal(f"Loop index {index_word.upper()!r} usage: "
                   f"Unsupported level of nested DO..LOOP {nb_nested_do_loops}")
 
         code = state.current_definition
         code += [stacks.xt_r_from_rs,  # move around outermost do-loop params
-                 stacks.xt_r_from_rs,] * (nb_nested_do_loops - expected_nested_level)
+                 stacks.xt_r_from_rs,] * (expected_nested_level - 1)
         code += [stacks.xt_r_rs_at]    # reaching the one we need
         code += [stacks.xt_r_rot, stacks.xt_r_rot,  # rearrange order
                  stacks.xt_r_to_rs, stacks.xt_r_to_rs,  # put them back
-                 ] * (nb_nested_do_loops - expected_nested_level)
+                 ] * (expected_nested_level - 1)
 
     return compiling_word(func)

@@ -1,6 +1,7 @@
+\ Forth is written in Forth
 : variable create 0 , ;
 : constant create , does> @ ;
-
+: cells 1 * ;
 variable base
 : binary 2 base ! ;
 : decimal 10 base ! ;
@@ -11,6 +12,9 @@ decimal
 variable precision
 5 precision !
 
+: dup 0 pick ;
+: over 1 pick ;
+: rot >r swap r> swap ;
 : 1+ 1 + ;
 : negate 0 swap - ;
 : abs dup 0 < if negate then ;
@@ -27,10 +31,13 @@ variable precision
 : 0<> 0= invert ;
 : cr 10 emit ;
 
-: stack? depth 0= invert ;
+: stack? depth 0<> ;
 
 : bl 32 ;
 : space bl emit ;
 : spaces dup 0<> if 0 do space loop then ;
 : >= < invert ;
 : <= > invert ;
+
+
+: .s depth 0> if depth 0 do i pick . bl emit loop then ;

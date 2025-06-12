@@ -59,3 +59,16 @@ def test_f_div(interpreter, program, res, capsys):
 )
 def test_parse_to_fp(word, precision, result):
     assert parse_to_fp(word, precision) == result
+
+
+@pytest.mark.parametrize(
+    'program, data_stack', [
+        ('FLITERAL 5', [500000]),
+        ('FLITERAL -0.56', [-56000]),
+        ('FLITERAL -15.00045', [-1500045])
+    ]
+)
+def test_f_literal(interpreter, program, data_stack):
+    interpreter.run(program)
+    assert interpreter.data_stack == data_stack
+
