@@ -157,16 +157,6 @@ def xt_r_tick(state: State):
     state.ds.append(addr)
 
 
-@compiling_word
-def xt_c_bracket_tick(state: State) -> None:
-    raise NotImplementedError
-
-
-@compiling_word
-def xt_c_compile_comma(state: State) -> None:
-    raise NotImplementedError
-
-
 @intercept_stack_error
 def xt_r_execute(state: State) -> Optional[POINTER]:
     xt_addr: POINTER = state.ds.pop()

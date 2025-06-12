@@ -23,8 +23,6 @@ dictionary: dict[WORD, XT] = {
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
     "'": primitives.xt_r_tick,
-    "[']": primitives.xt_c_bracket_tick,
-    "compile,": primitives.xt_c_compile_comma,
     "execute": primitives.xt_r_execute,
     '[compile]': primitives.xt_c_bracket_compile,
     "postpone": primitives.xt_c_postpone,

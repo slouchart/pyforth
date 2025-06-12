@@ -31,7 +31,7 @@ variable precision
 : 0<> 0= invert ;
 : cr 10 emit ;
 
-: stack? depth 0= invert ;
+: stack? depth 0<> ;
 
 : bl 32 ;
 : space bl emit ;
