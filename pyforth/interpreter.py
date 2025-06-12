@@ -13,7 +13,9 @@ from .runtime.primitives import xt_r_push, execute_immediate
 
 
 MEMORY_SIZE: Final[int] = 64
-
+EXTENSIONS: Sequence[str] = (
+    'core.forth',
+)
 
 class _InnerInterpreter(State):
 
@@ -156,15 +158,15 @@ class _InnerInterpreter(State):
 
 class Interpreter:
 
-    def __init__(self) -> None:
+    def __init__(self, extensions: Sequence[str] = EXTENSIONS) -> None:
         self._state: _InnerInterpreter = _InnerInterpreter(parent=self)
         self._heap_fence: int = 0
-        self._bootstrap()
+        self._bootstrap(extensions)
         self._heap_fence = self._state.next_heap_address  # protect vars & cons defined in bootstrap
 
     @property
     def data_stack(self) -> DATA_STACK:
-        return self._state.ds
+        return self._state.ds[:]
 
     @property
     def heap(self) -> Sequence[LITERAL]:
@@ -172,7 +174,7 @@ class Interpreter:
 
     @property
     def return_stack(self) -> RETURN_STACK:
-        return self._state.rs
+        return self._state.rs[:]
 
     @property
     def words(self) -> Sequence[WORD]:
@@ -232,12 +234,13 @@ class Interpreter:
             pass
         return False
 
-    def _bootstrap(self) -> None:
-        extension_path = Path(__file__).parent / 'core.forth'
-        with extension_path.open(mode='r') as stream:
-            code: str = ' \n'.join(stream.readlines())
-            self._state.interactive = False
-            self.run(input_code=code)
+    def _bootstrap(self, extensions: Sequence[str]) -> None:
+        self._state.interactive = False
+        for extension in extensions:
+            extension_path = Path(__file__).parent / extension
+            with extension_path.open(mode='r') as stream:
+                code: str = ' \n'.join(stream.readlines())
+                self.run(input_code=code)
 
     def _reset(self) -> None:
         self._state.input_code = ''
