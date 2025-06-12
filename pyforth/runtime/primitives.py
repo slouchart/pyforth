@@ -44,7 +44,7 @@ def xt_r_run(state: State) -> POINTER:
     word: WORD = cast(WORD, state.loaded_code[p])
     try:
         xt_r: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[word])
-        state.execute_as(xt_r)
+        state.execute(xt_r)
         return p + 1
     except KeyError:
         raise ForthCompilationError(f"Undefined word {word!r}") from None
@@ -183,7 +183,7 @@ def xt_c_compile(state: State) -> POINTER:
 
 def execute_immediate(state: State, func: XT) -> Optional[POINTER]:
     if isinstance(func, list):
-        return state.execute_as(cast(DEFINED_XT, func))  # TODO needs rework
+        return state.execute(cast(DEFINED_XT, func))  # TODO needs rework
     else:
         assert callable(func)
         return func(state)

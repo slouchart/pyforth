@@ -17,6 +17,11 @@ Features
 * implement fixed points functions FEXP, FLN, FLOG, FSINCOS, FATAN2 using CORDIC techniques (or rescaled decimals)
 * test memory management (arrays & strings)
 
+Documentation
+-------------
+* docstrings for runtime execution tokens
+
+
 Integration
 -----------
 * add a pyproject.toml 
