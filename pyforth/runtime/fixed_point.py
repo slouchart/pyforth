@@ -3,10 +3,8 @@ import sys
 from decimal import Decimal, InvalidOperation, getcontext
 
 from pyforth.core import State, WORD, ForthCompilationError
-from .utils import pass_state_only
 
 
-@pass_state_only
 def xt_r_dot_f(state: State) -> None:
     value: int = state.ds.pop()
     precision: int = state.precision
@@ -40,7 +38,6 @@ def parse_to_fp(word: WORD, precision: int) -> int:
         return int((result * 10**precision).to_integral_value(rounding=decimal.ROUND_HALF_EVEN))
 
 
-@pass_state_only
 def xt_r_f_mul(state: State) -> None:
     b: int = state.ds.pop()
     a: int = state.ds.pop()
@@ -49,7 +46,6 @@ def xt_r_f_mul(state: State) -> None:
     state.ds.append(result)
 
 
-@pass_state_only
 def xt_r_f_div(state: State) -> None:
     b: int = state.ds.pop()
     a: int = state.ds.pop()

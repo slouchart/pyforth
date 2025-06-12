@@ -1,12 +1,12 @@
 from pyforth.core import ForthCompilationError
-from pyforth.core import WORD, POINTER, DEFINED_XT_R
+from pyforth.core import WORD, POINTER, DEFINED_XT
 
 
 def fatal(msg: str) -> None:
     raise ForthCompilationError(msg)
 
 
-def set_exit_jmp_address(exit_: tuple[WORD, POINTER] | tuple[()], code: DEFINED_XT_R) -> None:
+def set_exit_jmp_address(exit_: tuple[WORD, POINTER] | tuple[()], code: DEFINED_XT) -> None:
     if exit_:
         word, slot = exit_
         if word != "EXIT":

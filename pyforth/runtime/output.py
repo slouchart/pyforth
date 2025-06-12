@@ -2,7 +2,7 @@ import sys
 
 from pyforth.core import STACK, State
 
-from .utils import pass_state_only, pass_both_stacks
+from .utils import pass_both_stacks
 
 
 @pass_both_stacks
@@ -11,7 +11,6 @@ def xt_r_dump(ds: STACK, rs: STACK) -> None:
     print(f"state.rs = {rs}")
 
 
-@pass_state_only
 def xt_r_dot(state: State) -> None:
     value: int = state.ds.pop()
     sys.stdout.write(state.int_to_str(value))
@@ -20,7 +19,6 @@ def xt_r_dot(state: State) -> None:
         sys.stdout.flush()
 
 
-@pass_state_only
 def xt_r_emit(state: State) -> None:
     sys.stdout.write(chr(state.ds.pop()))
     if state.interactive:

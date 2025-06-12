@@ -1,14 +1,14 @@
 from functools import wraps
 from typing import Callable, Optional, Any
 
-from pyforth.core import DEFINED_XT_R, NATIVE_XT_R, POINTER, STACK, State
+from pyforth.core import NATIVE_XT, POINTER, STACK, State
 
 
 def bool2forth(value: Any) -> int:
     return -1 if bool(value) else 0
 
 
-def pass_both_stacks(func: Callable[[STACK, STACK], None]) -> NATIVE_XT_R:
+def pass_both_stacks(func: Callable[[STACK, STACK], None]) -> NATIVE_XT:
 
     @wraps(func)
     def wrapper(state: State, *_) -> None:
@@ -17,46 +17,28 @@ def pass_both_stacks(func: Callable[[STACK, STACK], None]) -> NATIVE_XT_R:
     return wrapper
 
 
-def pass_data_stack(func: Callable[[STACK, DEFINED_XT_R, POINTER], Optional[POINTER]]) -> NATIVE_XT_R:
+def pass_data_stack(func: Callable[[STACK], Optional[POINTER]]) -> NATIVE_XT:
 
     @wraps(func)
-    def wrapper(state: State, code: DEFINED_XT_R, p: POINTER) -> Optional[POINTER]:
-        return func(state.ds, code, p)
+    def wrapper(state: State) -> Optional[POINTER]:
+        return func(state.ds)
 
     return wrapper
 
 
-def pass_no_state(func: Callable[[DEFINED_XT_R, POINTER], Optional[POINTER]]) -> NATIVE_XT_R:
+def pure_stack_operation(func: Callable[[STACK], None]) -> NATIVE_XT:
 
     @wraps(func)
-    def wrapper(_: State, code: DEFINED_XT_R, p: POINTER) -> Optional[POINTER]:
-        return func(code, p)
-
-    return wrapper
-
-
-def pure_stack_operation(func: Callable[[STACK], None]) -> NATIVE_XT_R:
-
-    @wraps(func)
-    def wrapper(state: State, *_) -> None:
+    def wrapper(state: State) -> None:
         func(state.ds)
 
     return wrapper
 
 
-def pass_state_only(func: Callable[[State], Optional[POINTER]]) -> NATIVE_XT_R:
+def compiling_word(func: Callable[[State], None]) -> NATIVE_XT:
 
     @wraps(func)
-    def wrapper(state: State, *_) -> Optional[POINTER]:
-        return func(state)
-
-    return wrapper
-
-
-def compiling_word(func: Callable[[State, DEFINED_XT_R], None]) -> NATIVE_XT_R:
-
-    @wraps(func)
-    def wrapper(state: State, code: DEFINED_XT_R, *_) -> None:
-        func(state, code)
+    def wrapper(state: State) -> None:
+        func(state)
 
     return wrapper

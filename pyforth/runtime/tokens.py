@@ -1,9 +1,9 @@
-from pyforth.core import WORD, XT_R
+from pyforth.core import WORD, XT
 
 from . import arithmetic, comparison, heap, logical, output, primitives, stacks, fixed_point
 
 
-runtime_execution_tokens: dict[WORD, XT_R] = {
+runtime_execution_tokens: dict[WORD, XT] = {
     "+": arithmetic.xt_r_add,
     "-": arithmetic.xt_r_sub,
     "/": arithmetic.xt_r_div,

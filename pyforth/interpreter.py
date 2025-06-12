@@ -4,12 +4,13 @@ from pathlib import Path
 from typing import cast, Sequence
 
 from .compiler import primitives, branching, loops, doloop
-from .core import DATA_STACK, DEFINED_XT_R, NATIVE_XT_R, POINTER, RETURN_STACK, WORD, XT_R
+from .compiler.utils import fatal
+from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT
 from .core import ForthCompilationError, State
 from .runtime import runtime_execution_tokens, execute, push
 
 
-_compilation_tokens: dict[WORD, XT_R] = {
+_compilation_tokens: dict[WORD, XT] = {
     ":": primitives.xt_c_colon,
     ";": primitives.xt_c_semi,
     "if": branching.xt_c_if,
@@ -41,6 +42,8 @@ class _InterpreterState(State):
         self.prompt: str = prompt
         self.interpreter: Interpreter = parent
         self.interactive: bool = interactive
+        self._is_compiling: bool = False  # set by colon, reset by semicolon
+        self._execution_contextes: list[list[DEFINED_XT | POINTER]] = []
 
     def next_word(self) -> WORD:
         while not self.words:
@@ -61,7 +64,7 @@ class _InterpreterState(State):
         return word
 
     @property
-    def runtime_execution_tokens(self) -> dict[WORD, XT_R]:
+    def runtime_execution_tokens(self) -> dict[WORD, XT]:
         return runtime_execution_tokens
 
     def tokenize(self, s):
@@ -71,7 +74,7 @@ class _InterpreterState(State):
             re.sub("#.*\n", "\n", s + "\n").lower().split()
         )  # Use "#" for comment to end of line
 
-    def execute_as(self, code: DEFINED_XT_R) -> None:
+    def execute_as(self, code: DEFINED_XT) -> None:
         self.interpreter.execute(code)
 
     @property
@@ -96,6 +99,47 @@ class _InterpreterState(State):
     def word_to_int(self, word: WORD) -> int:
         return int(word, base=self.base)
 
+    def set_compile_flag(self) -> None:
+        assert not self.is_compiling
+        self._is_compiling = True
+        self.prompt = "...    "
+
+    def reset_compile_flag(self) -> None:
+        assert self.is_compiling
+        self._is_compiling = False
+        self.prompt = "Forth> "
+
+    @property
+    def is_compiling(self) -> bool:
+        return self._is_compiling
+
+    @property
+    def past_end_of_code(self) -> bool:
+        return not self.instruction_pointer < len(self.loaded_code)
+
+    def next_exec_token(self) -> NATIVE_XT:
+        func = cast(NATIVE_XT, self.loaded_code[self.instruction_pointer])
+        self.set_instruction_pointer(self.instruction_pointer + 1)
+        return func
+
+    @property
+    def instruction_pointer(self) -> POINTER:
+        return cast(POINTER, self._execution_contextes[-1][1])
+
+    def set_instruction_pointer(self, p: POINTER) -> None:
+        self._execution_contextes[-1][1] = p
+
+    @property
+    def loaded_code(self) -> DEFINED_XT:
+        return cast(DEFINED_XT, self._execution_contextes[-1][0])
+
+    def set_execution_context(self, code: DEFINED_XT) -> None:
+        self._execution_contextes.append([code, 0])
+
+    def reset_execution_context(self) -> tuple[DEFINED_XT, POINTER]:
+        code, p = cast(tuple[DEFINED_XT, POINTER], self._execution_contextes.pop())
+        return code, p
+
 
 class Interpreter:
 
@@ -117,7 +161,7 @@ class Interpreter:
             self.state.interactive = interactive_flag
 
     def __init__(self, interactive: bool = True) -> None:
-        self.state: State = _InterpreterState(parent=self, interactive=interactive)
+        self.state: _InterpreterState = _InterpreterState(parent=self, interactive=interactive)
         self._heap_fence: int = 0
         self._bootstrap()
         self._heap_fence = self.state.next_heap_address  # protect vars & cons defined in bootstrap
@@ -130,6 +174,10 @@ class Interpreter:
         self.state.words = []
         self.state.last_created_word = ''
         self.state.next_heap_address = self._heap_fence
+        self.state.prompt = "Forth> "
+
+        assert not self.state.is_compiling
+        self.state.current_definition = []
 
     @property
     def words(self) -> Sequence[WORD]:
@@ -151,77 +199,76 @@ class Interpreter:
 
         while True:
             try:
-                code: DEFINED_XT_R | None = self.compile()  # compile/run from user
-                if code is None:
-                    if self.state.interactive:
-                        print(" ")
-                    break
-                self.execute(code)
+                word: WORD = self.state.next_word()
+                self.interpret(word)
+            except StopIteration:
+                return None
             except ForthCompilationError as condition:
                 if self.state.interactive:
                     print(condition)
                     break
                 raise condition from None
 
-    def compile(self) -> DEFINED_XT_R | None:
-        code: DEFINED_XT_R = []
-        self.state.prompt = "Forth> "
-        while True:
-            try:
-                word: WORD = self.state.next_word()  # get next word
-            except StopIteration:
-                return None
+    def interpret(self, word: WORD) -> None:
 
-            found, immediate, c_xt, r_xt = self._search_word(word)
-            if found:
-                if immediate:
-                    assert c_xt is not None
-                    # self.execute(self._compile_address(word, c_xt))
-                    self._execute_immediate(c_xt, code)
-                else:
-                    assert r_xt is not None
-                    code += self._compile_address(word, r_xt)
+        found, immediate, c_xt, r_xt = self._search_word(word)
+        if found:
+            if immediate:
+                assert c_xt is not None
+                self._execute_immediate(c_xt)
+            elif self.state.is_compiling:
+                assert r_xt is not None
+                self.state.current_definition += self._compile_address(word, r_xt)
             else:
-                # Number to be pushed onto ds at runtime
-                if self.is_literal(word):
-                    code += [push, self.state.word_to_int(word)]
-                else:  # defer
-                    code += self._deferred_definition(word)
-
-            if not self.state.control_stack:  # check end of compilation
-                return code
-
-            self.state.prompt = "...    "
-
-    def _execute_immediate(self, func: XT_R, code: DEFINED_XT_R) -> None:
-        if isinstance(func, list):
-            self.execute(func)  # TODO needs rework
+                assert r_xt is not None
+                self._execute_immediate(r_xt)
         else:
-            func(self.state, code, -1)  # must pass a pointer anyway
+            # Number to be pushed onto ds at runtime
+            if self.is_literal(word):
+                action: DEFINED_XT = [push, self.state.word_to_int(word)]
+                if self.state.is_compiling:
+                    self.state.current_definition += action
+                else:
+                    self.execute(action)
+            else:  # defer
+                if self.state.is_compiling:
+                    self.state.current_definition += self._deferred_definition(word)
+                else:
+                    fatal(f"Unknown word: {word!r}")
 
-    def execute(self, code: DEFINED_XT_R) -> None:
-        inst_ptr: POINTER = 0
-        while inst_ptr < len(code):
-            func: NATIVE_XT_R = cast(NATIVE_XT_R, code[inst_ptr])
-            inst_ptr += 1
-            new_inst_ptr: POINTER | None = func(self.state, code, inst_ptr)
+    def _execute_immediate(self, func: XT) -> None:
+        if isinstance(func, list):
+            self.execute(cast(DEFINED_XT, func))  # TODO needs rework
+        else:
+            assert callable(func)
+            func(self.state)
+
+    def execute(self, code: DEFINED_XT) -> None:
+        self.state.set_execution_context(code)  # TODO could be a context manager
+        while not self.state.past_end_of_code:
+            func: NATIVE_XT = self.state.next_exec_token()
+            new_inst_ptr: POINTER | None = func(self.state)
             if new_inst_ptr is not None:
-                inst_ptr = new_inst_ptr
+                self.state.set_instruction_pointer(new_inst_ptr)
+        self.state.reset_execution_context()
 
-    def _search_word(self, word: WORD) -> tuple[bool, bool, XT_R | None, XT_R | None]:
+    @staticmethod
+    def _search_word(word: WORD) -> tuple[bool, bool, XT | None, XT | None]:
 
-        c_xt: XT_R | None = _compilation_tokens.get(word)  # Is there a compile time action ?
-        r_xt: XT_R | None = runtime_execution_tokens.get(word)  # Is there a runtime action ?
+        c_xt: XT | None = _compilation_tokens.get(word)  # Is there a compile time action ?
+        r_xt: XT | None = runtime_execution_tokens.get(word)  # Is there a runtime action ?
 
         found: bool = c_xt is not None or r_xt is not None
         immediate: bool = c_xt is not None
         return found, immediate, c_xt, r_xt
 
-    def _compile_address(self, word: WORD, xt_r: XT_R) -> DEFINED_XT_R:
+    @staticmethod
+    def _compile_address(word: WORD, xt_r: XT) -> DEFINED_XT:
         if isinstance(xt_r, list):
-            return [execute, word]
+            return Interpreter._deferred_definition(word)
 
         return [xt_r, ]  # push builtin for runtime
 
-    def _deferred_definition(self, word: WORD) -> DEFINED_XT_R:
+    @staticmethod
+    def _deferred_definition(word: WORD) -> DEFINED_XT:
         return [execute, word]
