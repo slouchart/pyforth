@@ -51,3 +51,4 @@ variable precision
 : clear begin stack? while drop repeat ;
 
 : fabs abs ;
+: fsincos dup fsin swap fcos ;

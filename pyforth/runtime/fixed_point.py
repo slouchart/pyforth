@@ -1,7 +1,8 @@
 import math
 import sys
+from typing import Callable
 
-from pyforth.core import State, WORD, ForthCompilationError
+from pyforth.core import State, WORD, NATIVE_XT
 from .utils import flush_stdout, intercept_stack_error
 
 
@@ -64,4 +65,34 @@ def xt_r_f_div(state: State) -> None:
     a: int = state.ds.pop()
     precision: int = state.precision
     result: int = (a * 10**precision) // b
+    state.ds.append(result)
+
+
+# TODO handle math domain error ValueError exception
+
+def _math_func_factory(func: Callable[[float], float]) -> NATIVE_XT:
+    def wrapped(state: State) -> None:
+        x: float = state.ds.pop() / 10 ** state.precision
+        y: float = func(x)
+        result: int = parse_to_fp(str(y), state.precision)
+        state.ds.append(result)
+
+    return intercept_stack_error(wrapped)
+
+
+xt_r_f_sqrt = _math_func_factory(math.sqrt)
+xt_r_f_exp = _math_func_factory(math.exp)
+xt_r_f_ln = _math_func_factory(math.log)
+xt_r_f_log = _math_func_factory(math.log10)
+xt_r_f_sin = _math_func_factory(math.sin)
+xt_r_f_cos = _math_func_factory(math.cos)
+xt_r_f_tan = _math_func_factory(math.tan)
+
+
+@intercept_stack_error
+def xt_r_f_atan2(state: State) -> None:
+    x: float = state.ds.pop() / 10 ** state.precision
+    y: float = state.ds.pop() / 10 ** state.precision
+    z: float = math.atan2(y, x)
+    result: int = parse_to_fp(str(z), state.precision)
     state.ds.append(result)

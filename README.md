@@ -11,7 +11,7 @@ Backlog
 
 Features
 --------
-* implement fixed points functions FABS, FEXP, FLN, FLOG, FSINCOS, FATAN2
+* implement fixed points functions hyperbolic trig, inv of trig/hyperbolic
 * implement ['] and "compile," for the sake of completion, can't grasp how it works, though
 * refactoring: reduce the number of primitives, aim to define compiling words as DEFINED_XT
   candidates: BEGIN, IF, ELSE, THEN, AGAIN, WHILE, REPEAT, UNTIL, DO, LOOP, [COMPILE] 
