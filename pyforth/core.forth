@@ -4,7 +4,7 @@
 : constant create , does> @ ;
 : cells 1 * ;
 
-variable base
+variable base \ usually takes the zeroth address
 : binary 2 base ! ;
 : decimal 10 base ! ;
 : hex 16 base ! ;
@@ -12,10 +12,6 @@ decimal
 
 -1 constant true
 0 constant false
-
-variable precision
-5 precision !
-
 
 : dup 0 pick ;
 : over 1 pick ;

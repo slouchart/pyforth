@@ -32,6 +32,10 @@ class StackUnderflowError(BaseException):
     pass
 
 
+class ForthRuntimeError(BaseException):
+    pass
+
+
 class State(ABC):
 
     ds: DATA_STACK = []
@@ -63,6 +67,9 @@ class State(ABC):
     @property
     @abstractmethod
     def precision(self) -> int: ...
+
+    @abstractmethod
+    def set_precision(self, u_val: int) -> None: ...
 
     @abstractmethod
     def int_to_str(self, value: LITERAL) -> str: ...

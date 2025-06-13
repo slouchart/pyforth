@@ -2,8 +2,17 @@ import math
 import sys
 from typing import Callable
 
-from pyforth.core import State, WORD, NATIVE_XT
+from pyforth.core import State, WORD, NATIVE_XT, ForthRuntimeError
 from .utils import flush_stdout, intercept_stack_error
+
+
+def xt_r_get_precision(state: State) -> None:
+    state.ds.append(state.precision)
+
+
+@intercept_stack_error
+def xt_r_set_precision(state: State) -> None:
+    state.set_precision(state.ds.pop())
 
 
 @intercept_stack_error
@@ -68,16 +77,28 @@ def xt_r_f_div(state: State) -> None:
     state.ds.append(result)
 
 
-# TODO handle math domain error ValueError exception
-
 def _math_func_factory(func: Callable[[float], float]) -> NATIVE_XT:
     def wrapped(state: State) -> None:
         x: float = state.ds.pop() / 10 ** state.precision
-        y: float = func(x)
-        result: int = parse_to_fp(str(y), state.precision)
-        state.ds.append(result)
+        try:
+            y: float = func(x)
+            result: int = parse_to_fp(str(y), state.precision)
+            state.ds.append(result)
+        except ValueError as e:
+            if "math domain error" in str(e):
+                raise ForthRuntimeError(str(e)) from None
+            raise
 
     return intercept_stack_error(wrapped)
+
+
+@intercept_stack_error
+def xt_r_f_power(state: State) -> None:
+    exponent: float = state.ds.pop() / 10 ** state.precision
+    base: float = state.ds.pop() / 10 ** state.precision
+    z: float = base ** exponent
+    result: int = parse_to_fp(str(z), state.precision)
+    state.ds.append(result)
 
 
 xt_r_f_sqrt = _math_func_factory(math.sqrt)
@@ -87,6 +108,15 @@ xt_r_f_log = _math_func_factory(math.log10)
 xt_r_f_sin = _math_func_factory(math.sin)
 xt_r_f_cos = _math_func_factory(math.cos)
 xt_r_f_tan = _math_func_factory(math.tan)
+xt_r_f_sinh = _math_func_factory(math.sinh)
+xt_r_f_cosh = _math_func_factory(math.cosh)
+xt_r_f_tanh = _math_func_factory(math.tanh)
+xt_r_f_asin = _math_func_factory(math.asin)
+xt_r_f_acos = _math_func_factory(math.acos)
+xt_r_f_atan = _math_func_factory(math.atan)
+xt_r_f_acosh = _math_func_factory(math.acosh)
+xt_r_f_asinh = _math_func_factory(math.asinh)
+xt_r_f_atanh = _math_func_factory(math.atanh)
 
 
 @intercept_stack_error

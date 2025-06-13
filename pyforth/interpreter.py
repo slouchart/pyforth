@@ -6,17 +6,19 @@ from typing import cast, Sequence, Generator, Final
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
-    StackUnderflowError, LITERAL
+    StackUnderflowError, LITERAL, ForthRuntimeError
 from .core import ForthCompilationError, State
 from .runtime import dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
 from .runtime.fixed_point import parse_to_fp
 
 
+DEFAULT_PRECISION: Final[int] = 5
 MEMORY_SIZE: Final[int] = 64
 EXTENSIONS: Sequence[str] = (
     'core.forth',
 )
+
 
 class _InnerInterpreter(State):
 
@@ -36,6 +38,7 @@ class _InnerInterpreter(State):
         self._execution_contextes: list[list[DEFINED_XT | POINTER]] = []
         self._input_buffer: str = input_code
         self.heap = [0] * heap_size
+        self._precision: int = DEFAULT_PRECISION
 
     @property
     def interactive(self) -> bool:
@@ -99,7 +102,12 @@ class _InnerInterpreter(State):
 
     @property
     def precision(self) -> int:
-        return self.heap[3]
+        return self._precision
+
+    def set_precision(self, u_val: int) -> None:
+        if u_val < 0:
+            raise ForthRuntimeError("Precision mist be a positive integer")
+        self._precision = u_val
 
     def int_to_str(self, value: int) -> str:
         match self.base:
@@ -204,7 +212,11 @@ class Interpreter:
                     self.interpret(word)
             except StopIteration:
                 return None
-            except (ForthCompilationError, StackUnderflowError) as condition:
+            except (
+                ForthCompilationError,
+                StackUnderflowError,
+                ForthRuntimeError
+            ) as condition:
                 if self._state.interactive:
                     print(condition)
                     continue
