@@ -16,7 +16,6 @@ def flush_stdout(func: NATIVE_XT) -> NATIVE_XT:
     def wrapper(state: State) -> None:
         func(state)
         if state.interactive:
-            sys.stdout.write("\n")
             sys.stdout.flush()
 
     return wrapper

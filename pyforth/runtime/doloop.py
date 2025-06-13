@@ -1,5 +1,3 @@
-from typing import Final
-
 from pyforth.core import POINTER, State, CONTROL_STACK, XT
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
 from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address

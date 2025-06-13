@@ -1,4 +1,3 @@
-
 from pyforth.core import STACK, LITERAL
 from .utils import pass_both_stacks, pure_stack_operation, intercept_stack_error
 

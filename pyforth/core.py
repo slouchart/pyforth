@@ -46,8 +46,10 @@ class State(ABC):
     @abstractmethod
     def interactive(self) -> bool: ...
 
+    @abstractmethod
     def set_compile_flag(self) -> None: ...
 
+    @abstractmethod
     def reset_compile_flag(self) -> None: ...
 
     @property
@@ -79,14 +81,11 @@ class State(ABC):
     def next_word(self) -> WORD: ...
 
     @abstractmethod
-    def execute_as(self, code: DefinedExecutionToken) -> None: ...
+    def execute(self, code: DefinedExecutionToken) -> None: ...
 
     @property
     @abstractmethod
     def instruction_pointer(self) -> POINTER: ...
-
-    @abstractmethod
-    def set_instruction_pointer(self, p: POINTER) -> None: ...
 
     @property
     @abstractmethod
