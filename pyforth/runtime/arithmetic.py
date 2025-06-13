@@ -40,3 +40,19 @@ def xt_r_mod(ds: STACK) -> None:
     b = ds.pop()
     a = ds.pop()
     ds.append(a % b)
+
+
+@intercept_stack_error
+@pure_stack_operation
+def xt_r_rshift(ds: STACK) -> None:
+    u = ds.pop()
+    v = ds.pop()
+    ds.append(v >> u)
+
+
+@intercept_stack_error
+@pure_stack_operation
+def xt_r_lshift(ds: STACK) -> None:
+    u = ds.pop()
+    v = ds.pop()
+    ds.append(v << u)

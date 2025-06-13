@@ -57,6 +57,8 @@ dictionary: dict[WORD, XT] = {
     "=": comparison.xt_r_eq,
     ">": comparison.xt_r_gt,
     "<": comparison.xt_r_lt,
+    "lshift": arithmetic.xt_r_lshift,
+    "rshift": arithmetic.xt_r_rshift,
     'and': logical.xt_r_and,
     'or': logical.xt_r_or,
     'invert': logical.xt_r_invert,

@@ -18,8 +18,8 @@ decimal
 : rot >r swap r> swap ;
 : 1+ 1 + ;
 : 1- 1 - ;
-: 2+ 2 + ;
-: 2- 2 - ;
+: 2* 1 LSHIFT ;
+: 2/ 1 RSHIFT ;
 : negate 0 swap - ;
 : abs dup 0 < if negate then ;
 : 2dup over over ;
