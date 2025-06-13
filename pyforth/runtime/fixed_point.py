@@ -2,7 +2,7 @@ import decimal
 import sys
 from decimal import Decimal, InvalidOperation, getcontext
 
-from pyforth.core import State, WORD, ForthCompilationError, POINTER
+from pyforth.core import State, WORD, ForthCompilationError
 from .utils import flush_stdout
 
 

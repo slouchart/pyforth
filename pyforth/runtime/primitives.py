@@ -1,5 +1,6 @@
 from typing import cast, Optional
-from pyforth.core import DefinedExecutionToken, DEFINED_XT, POINTER, LITERAL, State, WORD, ForthCompilationError, XT
+from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT
+from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
 from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address, intercept_stack_error
 
 
@@ -183,7 +184,7 @@ def xt_c_compile(state: State) -> POINTER:
 
 def execute_immediate(state: State, func: XT) -> Optional[POINTER]:
     if isinstance(func, list):
-        return state.execute(cast(DEFINED_XT, func))  # TODO needs rework
+        return state.execute(cast(DEFINED_XT, func))
     else:
         assert callable(func)
         return func(state)
