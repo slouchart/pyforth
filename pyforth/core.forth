@@ -21,6 +21,9 @@ variable precision
 : over 1 pick ;
 : rot >r swap r> swap ;
 : 1+ 1 + ;
+: 1- 1 - ;
+: 2+ 2 + ;
+: 2- 2 - ;
 : negate 0 swap - ;
 : abs dup 0 < if negate then ;
 : 2dup over over ;
@@ -44,5 +47,5 @@ variable precision
 : space bl emit ;
 : spaces dup 0<> if 0 do space loop then ;
 
-: .s depth 0> if depth 0 do i pick . bl emit loop then ;
+: .s stack? if depth 0 do depth i - 1- pick . bl emit loop cr then ;
 : clear begin stack? while drop repeat ;
