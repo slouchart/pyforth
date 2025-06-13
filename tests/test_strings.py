@@ -25,3 +25,17 @@ def test_string_output(interpreter, program, res, capsys):
     interpreter.run(program)
     captured = capsys.readouterr()
     assert captured.out == res
+
+
+@pytest.mark.parametrize(
+    'program, res', [
+        ('char x .', f"{ord('x')}"),
+        ('char x emit', "x"),
+        (': test [char] x ;', ''),
+        (': test [char] x ; test emit', 'x')
+    ]
+)
+def test_char_and_bracket_char(interpreter, program, res, capsys):
+    interpreter.run(program)
+    captured = capsys.readouterr()
+    assert captured.out == res

@@ -97,5 +97,7 @@ dictionary: dict[WORD, XT] = {
     "ftanh": fixed_point.xt_r_f_tanh,
     ".\"": strings.xt_c_dot_quote,
     "s\"": strings.xt_c_s_quote,
+    "char": strings.xt_r_char,
+    "[char]": strings.xt_c_bracket_char,
     "type": strings.xt_r_type,
 }

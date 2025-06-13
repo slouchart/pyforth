@@ -10,7 +10,7 @@ Fixed-point computing
 
 Modern Forth compilers come with a floating-point stack and a bunch of F-prefixed words to deal with it.
 I am wanting to keep things simple. Thus, I'm using a integer fixed-point representation of decimal numbers.
-A global interpreter variable aptly named ``PRECISION`` contains a value between 0 and +inf (practically 15 is enough)
+A global interpreter pseudo-constant aptly named ``PRECISION`` contains a value between 0 and +inf (practically 15 is enough)
 and represent the place of the decimal point.
 
 I use float built-in type ``float`` and the ``math`` module to emulate converting back and forth (pun) from 

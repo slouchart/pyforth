@@ -1,9 +1,9 @@
 import sys
 from typing import Final
 
-from pyforth.core import State, LITERAL, POINTER
-from .utils import flush_stdout, compiling_word
-
+from pyforth.core import State, LITERAL, POINTER, WORD
+from .primitives import xt_r_push
+from .utils import flush_stdout, compiling_word, fatal
 
 QUOTE: Final[str] = r'"'
 
@@ -56,3 +56,17 @@ def parse_string(state: State, until: str) -> str:
         s += c
         c = state.next_char()
     return s
+
+
+def xt_r_char(state: State) -> None:
+    word: WORD = state.next_word()
+    state.ds.append(ord(word[0]))
+
+
+@compiling_word
+def xt_c_bracket_char(state: State) -> None:
+    if not state.is_compiling:
+        fatal("[CHAR] Interpreting a compile-only word")
+
+    word: WORD = state.next_word()
+    state.current_definition += [xt_r_push, ord(word[0])]
