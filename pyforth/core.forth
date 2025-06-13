@@ -49,3 +49,5 @@ variable precision
 
 : .s stack? if depth 0 do depth i - 1- pick . bl emit loop cr then ;
 : clear begin stack? while drop repeat ;
+
+: fabs abs ;

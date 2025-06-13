@@ -1,6 +1,5 @@
-import decimal
+import math
 import sys
-from decimal import Decimal, InvalidOperation, getcontext
 
 from pyforth.core import State, WORD, ForthCompilationError
 from .utils import flush_stdout, intercept_stack_error
@@ -21,13 +20,6 @@ def fp_to_str(f: int, precision: int) -> str:
     fmt: str = '{:0' + str(precision) + 'd}'
     result: str = ('-' if negative else '') + str(int_p) + '.' + fmt.format(frac_p)
     return result
-
-
-def xt_r_f_literal(state: State) -> None:  # TODO need rework, semantics are wrong
-    word: WORD = state.next_word()
-    precision: int = state.precision
-    value: int = parse_to_fp(word, precision)
-    state.ds.append(value)
 
 
 def parse_to_fp(word: WORD, precision: int) -> int:
