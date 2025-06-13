@@ -41,6 +41,7 @@ decimal
 : <= > invert ;
 
 : stack? depth 0<> ;
+: ?dup dup 0<> if dup then ;
 
 : cr 10 emit ;
 : bl 32 ;
@@ -52,3 +53,7 @@ decimal
 
 : fabs abs ;
 : fsincos dup fsin swap fcos ;
+: /mod 2dup / >r mod r> swap ;
+: m* * ;
+: */ * / ;
+: */mod * /mod ;
