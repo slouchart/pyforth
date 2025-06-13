@@ -3,9 +3,10 @@ import sys
 from decimal import Decimal, InvalidOperation, getcontext
 
 from pyforth.core import State, WORD, ForthCompilationError
-from .utils import flush_stdout
+from .utils import flush_stdout, intercept_stack_error
 
 
+@intercept_stack_error
 @flush_stdout
 def xt_r_dot_f(state: State) -> None:
     value: int = state.ds.pop()
@@ -22,7 +23,7 @@ def fp_to_str(f: int, precision: int) -> str:
     return result
 
 
-def xt_r_f_literal(state: State) -> None:
+def xt_r_f_literal(state: State) -> None:  # TODO need rework, semantics are wrong
     word: WORD = state.next_word()
     precision: int = state.precision
     value: int = parse_to_fp(word, precision)
@@ -30,20 +31,33 @@ def xt_r_f_literal(state: State) -> None:
 
 
 def parse_to_fp(word: WORD, precision: int) -> int:
-    old_prec = getcontext().prec
-    result: Decimal | None
+    # 1. could be an integer?
     try:
-        getcontext().prec = precision
-        result = Decimal(word)
-    except InvalidOperation as exc:
-        raise ForthCompilationError(str(exc)) from None
-    finally:
-        getcontext().prec = old_prec
+        int(word)
+        raise ValueError(f"{word!r} Not a decimal number representation")
+    except ValueError as exc:
+        if "Not a decimal number representation" in str(exc):
+            raise exc from None
+        # 2. try to convert into float
+        f: float = float(word)
+        apparent_precision: int = 0
+        while round(f) != f:
+            f *= 10
+            apparent_precision += 1
 
-    if result is not None:
-        return int((result * 10**precision).to_integral_value(rounding=decimal.ROUND_HALF_EVEN))
+        # 3. adjust precision
+        div_or_mul = 1 if apparent_precision < precision else -1
+        while apparent_precision != precision:
+            if div_or_mul > 0:
+                f *= 10
+            else:
+                f /= 10
+            apparent_precision += div_or_mul
+
+        return int(round(f))
 
 
+@intercept_stack_error
 def xt_r_f_mul(state: State) -> None:
     b: int = state.ds.pop()
     a: int = state.ds.pop()
@@ -52,6 +66,7 @@ def xt_r_f_mul(state: State) -> None:
     state.ds.append(result)
 
 
+@intercept_stack_error
 def xt_r_f_div(state: State) -> None:
     b: int = state.ds.pop()
     a: int = state.ds.pop()

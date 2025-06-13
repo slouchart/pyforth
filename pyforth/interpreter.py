@@ -10,6 +10,7 @@ from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD
 from .core import ForthCompilationError, State
 from .runtime import dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
+from .runtime.fixed_point import parse_to_fp
 
 
 MEMORY_SIZE: Final[int] = 64
@@ -112,7 +113,15 @@ class _InnerInterpreter(State):
                 raise ValueError(f"Unsupported numeric basis: {self.base!r}")
 
     def word_to_int(self, word: WORD) -> int:
-        return int(word, base=self.base)
+        # if word parses to some float, favor float first (assert decimal)
+        # may need some special parsing (e.g. 1 -> regular int, 1.0 or 1.0e0 -> fixed-point repr)
+        try:
+            return parse_to_fp(word, precision=self.precision)
+        except ValueError:
+            try:
+                return int(word, base=self.base)
+            except ValueError:
+                raise ForthCompilationError(f"Cannot parse {word!r} as a literal") from None
 
     def set_compile_flag(self) -> None:
         assert not self.is_compiling
@@ -230,8 +239,14 @@ class Interpreter:
         try:
             int(word, base=self._state.base)
             return True
-        except ValueError:
-            pass
+        except ValueError as exc:
+            if 'invalid literal' in str(exc):
+                # maybe it's a decimal a.k.a. fixed point literal
+                try:
+                    float(word)
+                    return True
+                except ValueError:
+                    pass
         return False
 
     def _bootstrap(self, extensions: Sequence[str]) -> None:

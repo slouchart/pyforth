@@ -71,7 +71,6 @@ dictionary: dict[WORD, XT] = {
     "create": primitives.xt_r_create,
     "does>": primitives.xt_r_does,
     'here': heap.xt_r_here,
-    "fliteral": fixed_point.xt_r_f_literal,
     ".f": fixed_point.xt_r_dot_f,
     "f+": arithmetic.xt_r_add,
     "f-": arithmetic.xt_r_sub,

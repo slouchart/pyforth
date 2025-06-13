@@ -45,12 +45,12 @@ def test_f_div(interpreter, program, res, capsys):
 
 @pytest.mark.parametrize(
     'word, precision, result', [
-        ('1', 3, 1000),
+        ('1.0', 3, 1000),
         ('1.23', 3, 1230),
         ('1.239', 2, 124),
         ('1.232', 2, 123),
         ('0.0025', 3, 2),
-        ('-0.235', 2, -24),
+        ('-0.235', 2, -23),
         ('-4.888', 3, -4888),
         ('-4.8882', 3, -4888),
         ('-4.8889', 3, -4889),
@@ -63,9 +63,12 @@ def test_parse_to_fp(word, precision, result):
 
 @pytest.mark.parametrize(
     'program, data_stack', [
-        ('FLITERAL 5', [500000]),
-        ('FLITERAL -0.56', [-56000]),
-        ('FLITERAL -15.00045', [-1500045])
+        ('5.0', [500000]),
+        ('-0.56', [-56000]),
+        ('-15.00045', [-1500045]),
+        ('-2e-2', [-2000]),
+        ('-123e-6', [-12]),
+        ('1.5678e4', [1567800000])
     ]
 )
 def test_f_literal(interpreter, program, data_stack):
