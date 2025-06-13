@@ -16,6 +16,8 @@ decimal
 : dup 0 pick ;
 : over 1 pick ;
 : rot >r swap r> swap ;
+: nip swap drop ;
+: tuck swap over ;
 : 1+ 1 + ;
 : 1- 1 - ;
 : 2* 1 LSHIFT ;
