@@ -57,3 +57,8 @@ decimal
 : m* * ;
 : */ * / ;
 : */mod * /mod ;
+
+\ Aliases because in Python int and char are the same
+: c, , ;
+: c@ @ ;
+: c! ! ;

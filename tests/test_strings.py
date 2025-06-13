@@ -32,7 +32,8 @@ def test_string_output(interpreter, program, res, capsys):
         ('char x .', f"{ord('x')}"),
         ('char x emit', "x"),
         (': test [char] x ;', ''),
-        (': test [char] x ; test emit', 'x')
+        (': test [char] x ; test emit', 'x'),
+        ('here char F c, char o c, char o c, 3 type', 'Foo')
     ]
 )
 def test_char_and_bracket_char(interpreter, program, res, capsys):

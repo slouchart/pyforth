@@ -59,7 +59,7 @@ def parse_string(state: State, until: str) -> str:
 
 
 def xt_r_char(state: State) -> None:
-    word: WORD = state.next_word()
+    word: WORD = state.next_word(preserve_case=True)
     state.ds.append(ord(word[0]))
 
 

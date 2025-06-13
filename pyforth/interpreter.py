@@ -68,12 +68,14 @@ class _InnerInterpreter(State):
         s, self._input_buffer = s[0], s[1:]
         return s
 
-    def next_word(self) -> WORD:
+    def next_word(self, preserve_case: bool = False) -> WORD:
         word: WORD = ''
         s: str = next(self.wait_for_input())
         match = re.match(r'\s*(\S+)\s+', s)
         if match is not None:
-            word = match.group(1).lower().strip()
+            word = match.group(1).strip()
+            if not preserve_case:
+                word = word.lower()
             self._input_buffer = self._input_buffer[match.span()[1]:]
             if word == "bye":
                 raise StopIteration
