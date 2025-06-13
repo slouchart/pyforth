@@ -24,6 +24,8 @@ decimal
 : 2/ 1 RSHIFT ;
 : negate 0 swap - ;
 : abs dup 0 < if negate then ;
+: min 2dup < if else swap then drop ;
+: max 2dup > if else swap then drop ;
 : 2dup over over ;
 : 2drop drop drop ;
 : 2swap rot >r rot r> ;
