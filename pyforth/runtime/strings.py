@@ -1,9 +1,9 @@
 import sys
 from typing import Final
 
-from pyforth.core import State, LITERAL, POINTER, WORD
+from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT
 from .primitives import xt_r_push
-from .utils import flush_stdout, compiling_word, fatal
+from .utils import flush_stdout, compiling_word, fatal, intercept_stack_error
 
 QUOTE: Final[str] = r'"'
 
@@ -23,22 +23,47 @@ def xt_c_dot_quote(state: State) -> None:
 
 
 @compiling_word
+def xt_c_char_quote(state: State) -> None:
+    if not state.is_compiling:
+        fatal("C\" Interpreting a compile-only word")
+    value: str = parse_string(state, until=QUOTE)
+    state.current_definition += [_store_string(value, counted=True)]
+
+
+@intercept_stack_error
+def xt_r_count(state: State) -> None:
+    c_addr = state.ds.pop()
+    count: int = state.heap[c_addr]
+    c_addr = c_addr + 1
+    state.ds.append(c_addr)
+    state.ds.append(count)
+
+
+def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
+
+    def _xt(state: State) -> None:
+        cells: list[int] = [ord(c) for c in s]
+        start: int = state.next_heap_address
+        state.next_heap_address += len(cells) + (1 if counted else 0)
+        if counted:
+            state.heap[start] = len(s)
+        for offset, cell in enumerate(cells):
+            state.heap[start + offset + (1 if counted else 0)] = cells[offset]
+        state.ds.append(start)
+        if not counted:
+            state.ds.append(len(s))
+
+    return _xt
+
+
+@compiling_word
 def xt_c_s_quote(state: State) -> None:
     value: str = parse_string(state, until=QUOTE)
 
-    def xt_r_s_quote(_state: State) -> None:
-        cells: list[int] = [ord(c) for c in value]
-        start: int = _state.next_heap_address
-        _state.next_heap_address += len(cells)
-        for offset, cell in enumerate(cells):
-            _state.heap[start + offset] = cells[offset]
-        _state.ds.append(start)
-        _state.ds.append(len(value))
-
     if state.is_compiling:
-        state.current_definition += [xt_r_s_quote,]
+        state.current_definition += [_store_string(value),]
     else:
-        xt_r_s_quote(state)
+        _store_string(value)(state)
 
 
 @flush_stdout

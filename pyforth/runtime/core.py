@@ -99,5 +99,7 @@ dictionary: dict[WORD, XT] = {
     "s\"": strings.xt_c_s_quote,
     "char": strings.xt_r_char,
     "[char]": strings.xt_c_bracket_char,
+    'c"': strings.xt_c_char_quote,
+    'count': strings.xt_r_count,
     "type": strings.xt_r_type,
 }

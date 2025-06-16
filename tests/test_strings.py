@@ -19,6 +19,7 @@ def test_string_output(interpreter, program, res, capsys):
         ('s" Hello, world!" type', "Hello, world!"),
         (': main s" Hello, world!" type ; ', ""),
         (': main s" Hello, world!" type ; main', "Hello, world!"),
+        (': name c" Seb" ; name count type', 'Seb')
     ]
 )
 def test_string_output(interpreter, program, res, capsys):

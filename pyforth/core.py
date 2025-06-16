@@ -6,7 +6,7 @@ from typing import TypeAlias, Optional, TypeVar, Generic
 
 T = TypeVar('T')
 
-class DefinedExecutionToken(Generic[T], list):
+class DefinedExecutionToken(list, Generic[T]):
     """Needed to set an _immediate attribute to True/False"""
     pass
 

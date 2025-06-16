@@ -123,8 +123,6 @@ class _InnerInterpreter(State):
                 raise ValueError(f"Unsupported numeric basis: {self.base!r}")
 
     def word_to_int(self, word: WORD) -> int:
-        # if word parses to some float, favor float first (assert decimal)
-        # may need some special parsing (e.g. 1 -> regular int, 1.0 or 1.0e0 -> fixed-point repr)
         try:
             return parse_to_fp(word, precision=self.precision)
         except ValueError:
