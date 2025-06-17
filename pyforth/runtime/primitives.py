@@ -1,7 +1,7 @@
 from typing import cast, Optional
 from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT
 from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
-from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address, intercept_stack_error
+from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error
 
 
 def xt_r_create(state: State) -> None:
