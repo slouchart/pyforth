@@ -20,7 +20,8 @@ RETURN_STACK = STACK[LITERAL]
 CONTROL_STRUCT = tuple[WORD, POINTER | WORD, tuple[WORD, POINTER] | tuple[()]]
 CONTROL_STACK = STACK[CONTROL_STRUCT]
 NATIVE_XT = Callable[["State"], Optional[POINTER]]
-DEFINED_XT: TypeAlias = DefinedExecutionToken[NATIVE_XT | LITERAL | WORD]
+XT_ATOM = NATIVE_XT | LITERAL | WORD
+DEFINED_XT: TypeAlias = DefinedExecutionToken[XT_ATOM]
 XT = NATIVE_XT | DEFINED_XT
 
 
@@ -117,3 +118,6 @@ class State(ABC):
     @property
     @abstractmethod
     def loaded_code(self) -> DefinedExecutionToken: ...
+
+    @abstractmethod
+    def current_execution_token(self) -> XT_ATOM: ...

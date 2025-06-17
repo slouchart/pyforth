@@ -6,7 +6,7 @@ from typing import cast, Sequence, Generator, Final
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
-    StackUnderflowError, LITERAL, ForthRuntimeError
+    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM
 from .core import ForthCompilationError, State
 from .runtime import dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
@@ -203,6 +203,9 @@ class _InnerInterpreter(State):
     @property
     def loaded_code(self) -> DEFINED_XT:
         return cast(DEFINED_XT, self._execution_contextes[-1][0])
+
+    def current_execution_token(self) -> XT_ATOM:
+        return self._execution_contextes[-1][0][self.instruction_pointer]
 
     def _set_execution_context(self, code: DEFINED_XT) -> None:
         self._execution_contextes.append([code, 0])

@@ -19,12 +19,12 @@ def xt_r_does(state: State) -> POINTER:
 
 
 def xt_r_jmp(state: State) -> POINTER:
-    return cast(POINTER, state.loaded_code[state.instruction_pointer])
+    return cast(POINTER, state.current_execution_token())
 
 
 def xt_r_jz(state: State) -> POINTER:
     return (
-        cast(POINTER, state.loaded_code[state.instruction_pointer]),
+        cast(POINTER, state.current_execution_token()),
         state.instruction_pointer + 1
     )[state.ds.pop()]
 
@@ -32,17 +32,17 @@ def xt_r_jz(state: State) -> POINTER:
 def xt_r_jnz(state: State) -> POINTER:
     return (
         state.instruction_pointer + 1,
-        cast(POINTER, state.loaded_code[state.instruction_pointer])
+        cast(POINTER, state.current_execution_token())
     )[state.ds.pop()]
 
 
 def xt_r_push(state: State) -> POINTER:
-    state.ds.append(cast(LITERAL, state.loaded_code[state.instruction_pointer]))
+    state.ds.append(cast(LITERAL, state.current_execution_token()))
     return state.instruction_pointer + 1
 
 
 def xt_r_run(state: State) -> POINTER:
-    p: POINTER = state.instruction_pointer
+    p: POINTER = state.instruction_pointer  # save current IP
     word: WORD = cast(WORD, state.loaded_code[p])
     try:
         xt_r: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[word])
@@ -53,7 +53,7 @@ def xt_r_run(state: State) -> POINTER:
 
 
 def xt_r_push_rs(state: State) -> POINTER:
-    state.rs.append(cast(LITERAL, state.loaded_code[state.instruction_pointer]))
+    state.rs.append(cast(LITERAL, state.current_execution_token()))
     return state.instruction_pointer + 1
 
 
@@ -177,7 +177,7 @@ def xt_c_bracket_compile(state: State) -> None:
 @compiling_word
 def xt_c_compile(state: State) -> POINTER:
     assert state.is_compiling
-    word: WORD = state.loaded_code[state.instruction_pointer]
+    word: WORD = state.current_execution_token()
     state.compile_to_current_definition(deferred_definition(word))
     return state.instruction_pointer + 1
 
