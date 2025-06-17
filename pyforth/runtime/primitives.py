@@ -85,7 +85,7 @@ def xt_c_semi(state: State) -> None:
         fatal(": not balanced with ;")
     assert isinstance(label, str)
     state.reveal_created_word(label)
-    set_exit_jmp_address(exit_, state.current_definition)
+    state.set_exit_jump_address(exit_)
     state.execution_tokens[label] = DefinedExecutionToken(state.current_definition[:]) # Save word definition in rDict
     state.current_definition.clear()
     state.reset_compile_flag()

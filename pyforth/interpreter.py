@@ -54,6 +54,13 @@ class _InnerInterpreter(State):
     def close_jump_address(self, addr: POINTER) -> None:
         self._current_definition[addr] = len(self._current_definition)
 
+    def set_exit_jump_address(self, exit_: tuple[WORD, POINTER] | tuple[()]) -> None:
+        if exit_:
+            word, slot = exit_
+            if word != "EXIT":
+                fatal(f"Unexpected word in place of EXIT: {word!r}")
+            self._current_definition[slot] = len(self._current_definition)
+
     def compile_to_current_definition(self, obj) -> POINTER:
         if isinstance(obj, list):
             self._current_definition += obj
