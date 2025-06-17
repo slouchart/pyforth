@@ -93,21 +93,21 @@ def xt_c_semi(state: State) -> None:
 @compiling_word
 def xt_c_exit(state: State) -> None:
 
-    def _exit(_state: State, _code: DEFINED_XT):
+    def _exit(_state: State):
         if not _state.control_stack:
             fatal("EXIT outside block")
         word, label, _ = _state.control_stack.pop()
         if word in ('IF', 'WHILE'):
-            _exit(_state, _code)
+            _exit(_state)
             _state.control_stack.append((word, label, _))
         else:
             if word not in ('COLON', 'BEGIN', 'DO'):
                 fatal(f"EXIT: Unexpected block structure {word}")
-            _code.append(xt_r_jmp)
-            _state.control_stack.append((word, label, ('EXIT', len(_code))))
-            _code.append(0)
+            slot = _state.compile_to_current_definition(xt_r_jmp)
+            _state.control_stack.append((word, label, ('EXIT', slot)))
+            _state.compile_to_current_definition(0)
 
-    _exit(state, state.current_definition)
+    _exit(state)
 
 
 @compiling_word
