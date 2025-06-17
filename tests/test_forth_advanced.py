@@ -100,3 +100,10 @@ def test_nested_do_loops(interpreter, program, data_stack, return_stack):
     interpreter.run(program)
     assert interpreter.data_stack == data_stack
     assert interpreter.return_stack == return_stack
+
+
+def test_non_reg_dot_s(interpreter, capsys):
+    program = '1 2 3 4 .s'
+    interpreter.run(program)
+    captured = capsys.readouterr()
+    assert captured.out == '1 2 3 4 \n'

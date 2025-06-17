@@ -1,23 +1,31 @@
 \ Forth is written in Forth
+
 : variable create 0 , ;
 : constant create , does> @ ;
 : cells 1 * ;
-variable base
+
+variable base \ usually takes the zeroth address
 : binary 2 base ! ;
 : decimal 10 base ! ;
 : hex 16 base ! ;
 decimal
+
 -1 constant true
 0 constant false
-variable precision
-5 precision !
 
 : dup 0 pick ;
 : over 1 pick ;
 : rot >r swap r> swap ;
+: nip swap drop ;
+: tuck swap over ;
 : 1+ 1 + ;
+: 1- 1 - ;
+: 2* 1 LSHIFT ;
+: 2/ 1 RSHIFT ;
 : negate 0 swap - ;
 : abs dup 0 < if negate then ;
+: min 2dup < if else swap then drop ;
+: max 2dup > if else swap then drop ;
 : 2dup over over ;
 : 2drop drop drop ;
 : 2swap rot >r rot r> ;
@@ -29,15 +37,32 @@ variable precision
 : 0= 0 = ;
 : 0> 0 > ;
 : 0<> 0= invert ;
-: cr 10 emit ;
-
-: stack? depth 0<> ;
-
-: bl 32 ;
-: space bl emit ;
-: spaces dup 0<> if 0 do space loop then ;
 : >= < invert ;
 : <= > invert ;
 
+: stack? depth 0<> ;
+: ?dup dup 0<> if dup then ;
 
-: .s depth 0> if depth 0 do i pick . bl emit loop then ;
+: cr 10 emit ;
+: bl 32 ;
+: space bl emit ;
+: spaces dup 0<> if 0 do space loop then ;
+
+: .s stack? if depth 0 do depth i - 1- pick . bl emit loop cr then ;
+: clear begin stack? while drop repeat ;
+
+: fabs abs ;
+: fsincos dup fsin swap fcos ;
+: /mod 2dup / >r mod r> swap ;
+: m* * ;
+: */ * / ;
+: */mod * /mod ;
+
+\ Aliases because in Python int and char are the same
+: c, , ;
+: c@ @ ;
+: c! ! ;
+
+: count ( c-addr0 -- c-addr1 u )
+dup @ swap 1+ swap  \ no need to implement in Python
+;

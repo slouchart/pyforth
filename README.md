@@ -5,17 +5,36 @@ This my second or third attempt at writing a Forth pseudo-compiler in Python.
 
 I took most of my inspiration from Chris Meyers and Fred Obermann article (https://www.openbookproject.net/py4fun/forth/forth.html)
 
+Fixed-point computing
+=====================
+
+Modern Forth compilers come with a floating-point stack and a bunch of F-prefixed words to deal with it.
+I am wanting to keep things simple. Thus, I'm using a integer fixed-point representation of decimal numbers.
+A global interpreter pseudo-constant aptly named ``PRECISION`` contains a value between 0 and +inf (practically 15 is enough)
+and represent the place of the decimal point.
+
+I use float built-in type ``float`` and the ``math`` module to emulate converting back and forth (pun) from 
+integer and float and to compute special functions.
+
 
 Backlog
 =======
 
 Features
 --------
-* implement ['] and "compile," for the sake of completion, can't grasp how it works, though
+
 * refactoring: reduce the number of primitives, aim to define compiling words as DEFINED_XT
-  candidates: BEGIN, IF, ELSE, THEN, AGAIN, WHILE, REPEAT, UNTIL, DO, LOOP, [COMPILE]
-* implement fixed points functions FEXP, FLN, FLOG, FSINCOS, FATAN2 using CORDIC techniques (or rescaled decimals)
+  candidates: BEGIN, IF, ELSE, THEN, AGAIN, WHILE, REPEAT, UNTIL, DO, LOOP, [COMPILE] 
 * test memory management (arrays & strings)
+
+Documentation
+-------------
+* docstrings for runtime execution tokens
+
+
+Bugs
+----
+
 
 Integration
 -----------

@@ -116,7 +116,9 @@ def test_output(interpreter, program, res, capsys):
 @pytest.mark.parametrize(
     'program, res', [
         pytest.param('HEX A 1 + . SPACE DECIMAL 9 1 + .', "B 10"),
-        ('binary 11 111 + . SPACE DECIMAL 11 111 + .', "1010 122")
+        ('binary 11 111 + . SPACE DECIMAL 11 111 + .', "1010 122"),
+        ('hex bl emit cr', ' \n'),
+        ('binary 11 spaces cr', ' '*3 + "\n")
     ]
 )
 def test_base(interpreter, program, res, capsys):

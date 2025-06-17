@@ -20,4 +20,4 @@ def test_eof_comments(interpreter, program, res, capsys):
 def test_inline_comments(interpreter, program, res, capsys):
     interpreter.run(input_code=program)
     captured = capsys.readouterr()
-    assert captured.out == res
+    assert captured.out.strip("\n") == res

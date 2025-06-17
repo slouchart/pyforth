@@ -6,13 +6,21 @@ from typing import cast, Sequence, Generator, Final
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
-    StackUnderflowError
+    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM
 from .core import ForthCompilationError, State
 from .runtime import dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
+from .runtime.fixed_point import parse_to_fp
 
 
-class _InterpreterState(State):
+DEFAULT_PRECISION: Final[int] = 5
+MEMORY_SIZE: Final[int] = 64
+EXTENSIONS: Sequence[str] = (
+    'core.forth',
+)
+
+
+class _InnerInterpreter(State):
 
     _DEFAULT_PROMPT: Final[str] = 'Forth> '
     _CONTINUATION_PROMPT: Final[str] = '... '
@@ -21,6 +29,7 @@ class _InterpreterState(State):
         self,
         parent: Interpreter,
         input_code: str = '',
+        heap_size: int = MEMORY_SIZE
     ):
         self._prompt: str = self._DEFAULT_PROMPT
         self._interpreter: Interpreter = parent
@@ -28,6 +37,40 @@ class _InterpreterState(State):
         self._is_compiling: bool = False  # set by colon, reset by semicolon
         self._execution_contextes: list[list[DEFINED_XT | POINTER]] = []
         self._input_buffer: str = input_code
+        self.heap = [0] * heap_size
+        self._precision: int = DEFAULT_PRECISION
+        self._last_created_word: WORD = ''
+        self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
+
+    def prepare_current_definition(self) -> None:
+        assert self.is_compiling
+        assert not self._current_definition
+        self._current_definition = DefinedExecutionToken()
+
+    def close_jump_address(self, addr: POINTER) -> None:
+        self._current_definition[addr] = len(self._current_definition)
+
+    def complete_current_definition(self) -> None:
+        self.execution_tokens[self.last_created_word] = DefinedExecutionToken(self._current_definition[:])
+        self._current_definition.clear()
+
+    def set_exit_jump_address(self, exit_: tuple[WORD, POINTER] | tuple[()]) -> None:
+        if exit_:
+            word, slot = exit_
+            if word != "EXIT":
+                fatal(f"Unexpected word in place of EXIT: {word!r}")
+            self._current_definition[slot] = len(self._current_definition)
+
+    def compile_to_current_definition(self, obj = None) -> POINTER:
+        if obj is None:
+            return len(self._current_definition)
+
+        if isinstance(obj, list):
+            self._current_definition += obj
+        else:
+            self._current_definition.append(obj)
+
+        return len(self._current_definition)
 
     @property
     def interactive(self) -> bool:
@@ -57,12 +100,14 @@ class _InterpreterState(State):
         s, self._input_buffer = s[0], s[1:]
         return s
 
-    def next_word(self) -> WORD:
+    def next_word(self, preserve_case: bool = False) -> WORD:
         word: WORD = ''
         s: str = next(self.wait_for_input())
         match = re.match(r'\s*(\S+)\s+', s)
         if match is not None:
-            word = match.group(1).lower().strip()
+            word = match.group(1).strip()
+            if not preserve_case:
+                word = word.lower()
             self._input_buffer = self._input_buffer[match.span()[1]:]
             if word == "bye":
                 raise StopIteration
@@ -76,8 +121,14 @@ class _InterpreterState(State):
     def execution_tokens(self) -> dict[WORD, XT]:
         return dictionary
 
-    def execute_as(self, code: DEFINED_XT) -> None:
-        self._interpreter.execute(code)
+    def execute(self, code: DEFINED_XT) -> None:
+        self._set_execution_context(code)  # TODO could be a context manager
+        while not self.past_end_of_code:
+            func: NATIVE_XT = self._next_exec_token()
+            new_inst_ptr: POINTER | None = func(self)
+            if new_inst_ptr is not None:
+                self._set_instruction_pointer(new_inst_ptr)
+        self._reset_execution_context()
 
     @property
     def base(self) -> int:
@@ -85,7 +136,12 @@ class _InterpreterState(State):
 
     @property
     def precision(self) -> int:
-        return self.heap[3]
+        return self._precision
+
+    def set_precision(self, u_val: int) -> None:
+        if u_val < 0:
+            raise ForthRuntimeError("Precision mist be a positive integer")
+        self._precision = u_val
 
     def int_to_str(self, value: int) -> str:
         match self.base:
@@ -99,7 +155,13 @@ class _InterpreterState(State):
                 raise ValueError(f"Unsupported numeric basis: {self.base!r}")
 
     def word_to_int(self, word: WORD) -> int:
-        return int(word, base=self.base)
+        try:
+            return parse_to_fp(word, precision=self.precision)
+        except ValueError:
+            try:
+                return int(word, base=self.base)
+            except ValueError:
+                raise ForthCompilationError(f"Cannot parse {word!r} as a literal") from None
 
     def set_compile_flag(self) -> None:
         assert not self.is_compiling
@@ -116,96 +178,100 @@ class _InterpreterState(State):
         return self._is_compiling
 
     @property
-    def past_end_of_code(self) -> bool:
-        return not self.instruction_pointer < len(self.loaded_code)
+    def last_created_word(self) -> WORD:
+        return self._last_created_word
 
-    def next_exec_token(self) -> NATIVE_XT:
-        func = cast(NATIVE_XT, self.loaded_code[self.instruction_pointer])
-        self.set_instruction_pointer(self.instruction_pointer + 1)
+    def reveal_created_word(self, word: WORD) -> None:
+        self._last_created_word = word
+
+    @property
+    def past_end_of_code(self) -> bool:
+        return not self.instruction_pointer < len(self.current_defined_execution_token)
+
+    def _next_exec_token(self) -> NATIVE_XT:
+        func = cast(NATIVE_XT, self.current_execution_token)
+        self._set_instruction_pointer(self.instruction_pointer + 1)
         return func
 
     @property
     def instruction_pointer(self) -> POINTER:
         return cast(POINTER, self._execution_contextes[-1][1])
 
-    def set_instruction_pointer(self, p: POINTER) -> None:
+    def _set_instruction_pointer(self, p: POINTER) -> None:
         self._execution_contextes[-1][1] = p
 
     @property
-    def loaded_code(self) -> DEFINED_XT:
+    def current_defined_execution_token(self) -> DEFINED_XT:
         return cast(DEFINED_XT, self._execution_contextes[-1][0])
 
-    def set_execution_context(self, code: DEFINED_XT) -> None:
+    @property
+    def current_execution_token(self) -> XT_ATOM:
+        return cast(DEFINED_XT, self._execution_contextes[-1][0])[self.instruction_pointer]
+
+    def _set_execution_context(self, code: DEFINED_XT) -> None:
         self._execution_contextes.append([code, 0])
 
-    def reset_execution_context(self) -> tuple[DEFINED_XT, POINTER]:
+    def _reset_execution_context(self) -> tuple[DEFINED_XT, POINTER]:
         code, p = cast(tuple[DEFINED_XT, POINTER], self._execution_contextes.pop())
         return code, p
+
+    def reset(self, heap_fence: POINTER) -> None:
+        self.input_code = ''
+        self.ds = []
+        self.rs = []
+        self.control_stack = []
+        self._last_created_word = ''
+        self.next_heap_address = heap_fence
+
+        assert not self.is_compiling
+        self._current_definition = DefinedExecutionToken()
 
 
 class Interpreter:
 
-    def is_literal(self, word: str) -> bool:
-        try:
-            int(word, base=self.state.base)
-            return True
-        except ValueError:
-            pass
-        return False
-
-    def _bootstrap(self) -> None:
-        extension_path = Path(__file__).parent / 'core.forth'
-        with extension_path.open(mode='r') as stream:
-            code: str = ' \n'.join(stream.readlines())
-            self.state.interactive = False
-            self.run(input_code=code)
-
-    def __init__(self) -> None:
-        self.state: _InterpreterState = _InterpreterState(parent=self)
+    def __init__(self, extensions: Sequence[str] = EXTENSIONS) -> None:
+        self._state: _InnerInterpreter = _InnerInterpreter(parent=self)
         self._heap_fence: int = 0
-        self._bootstrap()
-        self._heap_fence = self.state.next_heap_address  # protect vars & cons defined in bootstrap
+        self._bootstrap(extensions)
+        self._heap_fence = self._state.next_heap_address  # protect vars & cons defined in bootstrap
 
-    def reset(self) -> None:
-        self.state.input_code = ''
-        self.state.ds = []
-        self.state.rs = []
-        self.state.control_stack = []
-        self.state.last_created_word = ''
-        self.state.next_heap_address = self._heap_fence
+    @property
+    def data_stack(self) -> DATA_STACK:
+        return self._state.ds[:]
 
-        assert not self.state.is_compiling
-        self.state.current_definition = DefinedExecutionToken()
+    @property
+    def heap(self) -> Sequence[LITERAL]:
+        return self._state.heap[self._heap_fence:][:]
+
+    @property
+    def return_stack(self) -> RETURN_STACK:
+        return self._state.rs[:]
 
     @property
     def words(self) -> Sequence[WORD]:
         return list(dictionary)
 
-    @property
-    def data_stack(self) -> DATA_STACK:
-        return self.state.ds
-
-    @property
-    def return_stack(self) -> RETURN_STACK:
-        return self.state.rs
-
     def run(self, input_code: str = '', interactive: bool = False) -> None:
 
-        self.reset()
-        self.state.interactive = interactive
+        self._state.reset(self._heap_fence)
+        self._state.interactive = interactive
 
         if input_code:
-            self.state.input_code = input_code
+            self._state.input_code = input_code
 
         while True:
             try:
-                word: WORD = self.state.next_word()
+                word: WORD = self._state.next_word()
                 if word:
                     self.interpret(word)
             except StopIteration:
                 return None
-            except (ForthCompilationError, StackUnderflowError) as condition:
-                if self.state.interactive:
+            except (
+                ForthCompilationError,
+                StackUnderflowError,
+                ForthRuntimeError
+            ) as condition:
+                if self._state.interactive:
                     print(condition)
                     continue
                 raise condition from None
@@ -215,33 +281,44 @@ class Interpreter:
         # loop as in https://www.forth.org/lost-at-c.html [figure 1.]
         found, immediate, xt = search_word(dictionary, word)
         if found:
+            assert xt is not None
             if immediate:
-                assert xt is not None
-                execute_immediate(self.state, xt)
-            elif self.state.is_compiling:  #  state entered with : and exited by ;
-                assert xt is not None
-                self.state.current_definition += compile_address(word, xt)
+                execute_immediate(self._state, xt)
+            elif self._state.is_compiling:  #  state entered with : and exited by ;
+                self._state.compile_to_current_definition(compile_address(word, xt))
             else:
-                assert xt is not None
-                execute_immediate(self.state, xt)
+                execute_immediate(self._state, xt)
         else:
             if self.is_literal(word):
-                action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self.state.word_to_int(word)])
-                if self.state.is_compiling:
-                    self.state.current_definition += action
+                action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self._state.word_to_int(word)])
+                if self._state.is_compiling:
+                    self._state.compile_to_current_definition(action)
                 else:
-                    self.execute(action)
+                    self._state.execute(action)
             else:  # defer
-                if self.state.is_compiling:
-                    self.state.current_definition += deferred_definition(word)
+                if self._state.is_compiling:
+                    self._state.compile_to_current_definition(deferred_definition(word))
                 else:
                     fatal(f"Unknown word: {word!r}")
 
-    def execute(self, code: DEFINED_XT) -> None:
-        self.state.set_execution_context(code)  # TODO could be a context manager
-        while not self.state.past_end_of_code:
-            func: NATIVE_XT = self.state.next_exec_token()
-            new_inst_ptr: POINTER | None = func(self.state)
-            if new_inst_ptr is not None:
-                self.state.set_instruction_pointer(new_inst_ptr)
-        self.state.reset_execution_context()
+    def is_literal(self, word: str) -> bool:
+        try:
+            int(word, base=self._state.base)
+            return True
+        except ValueError as exc:
+            if 'invalid literal' in str(exc):
+                # maybe it's a decimal a.k.a. fixed point literal
+                try:
+                    float(word)
+                    return True
+                except ValueError:
+                    pass
+        return False
+
+    def _bootstrap(self, extensions: Sequence[str]) -> None:
+        self._state.interactive = False
+        for extension in extensions:
+            extension_path = Path(__file__).parent / extension
+            with extension_path.open(mode='r') as stream:
+                code: str = ' \n'.join(stream.readlines())
+                self.run(input_code=code)

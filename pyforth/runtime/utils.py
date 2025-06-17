@@ -16,18 +16,9 @@ def flush_stdout(func: NATIVE_XT) -> NATIVE_XT:
     def wrapper(state: State) -> None:
         func(state)
         if state.interactive:
-            sys.stdout.write("\n")
             sys.stdout.flush()
 
     return wrapper
-
-
-def set_exit_jmp_address(exit_: tuple[WORD, POINTER] | tuple[()], code: DEFINED_XT) -> None:
-    if exit_:
-        word, slot = exit_
-        if word != "EXIT":
-            fatal(f"Unexpected word in place of EXIT: {word!r}")
-        code[slot] = len(code)
 
 
 def bool2forth(value: Any) -> int:

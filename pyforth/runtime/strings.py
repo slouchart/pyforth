@@ -1,9 +1,9 @@
 import sys
 from typing import Final
 
-from pyforth.core import State, LITERAL, POINTER
-from .utils import flush_stdout, compiling_word
-
+from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT
+from .primitives import xt_r_push
+from .utils import flush_stdout, compiling_word, fatal, intercept_stack_error
 
 QUOTE: Final[str] = r'"'
 
@@ -17,28 +17,44 @@ def xt_c_dot_quote(state: State) -> None:
         sys.stdout.write(value)
 
     if state.is_compiling:
-        state.current_definition += [xt_r_dot_quote,]
+        state.compile_to_current_definition([xt_r_dot_quote,])
     else:
         xt_r_dot_quote(state)
+
+
+@compiling_word
+def xt_c_char_quote(state: State) -> None:
+    if not state.is_compiling:
+        fatal("C\" Interpreting a compile-only word")
+    value: str = parse_string(state, until=QUOTE)
+    state.compile_to_current_definition([_store_string(value, counted=True)])
+
+
+def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
+
+    def _xt(state: State) -> None:
+        cells: list[int] = [ord(c) for c in s]
+        start: int = state.next_heap_address
+        state.next_heap_address += len(cells) + (1 if counted else 0)
+        if counted:
+            state.heap[start] = len(s)
+        for offset, cell in enumerate(cells):
+            state.heap[start + offset + (1 if counted else 0)] = cells[offset]
+        state.ds.append(start)
+        if not counted:
+            state.ds.append(len(s))
+
+    return _xt
 
 
 @compiling_word
 def xt_c_s_quote(state: State) -> None:
     value: str = parse_string(state, until=QUOTE)
 
-    def xt_r_s_quote(_state: State) -> None:
-        cells: list[int] = [ord(c) for c in value]
-        start: int = _state.next_heap_address
-        _state.next_heap_address += len(cells)
-        for offset, cell in enumerate(cells):
-            _state.heap[start + offset] = cells[offset]
-        _state.ds.append(start)
-        _state.ds.append(len(value))
-
     if state.is_compiling:
-        state.current_definition += [xt_r_s_quote,]
+        state.compile_to_current_definition([_store_string(value),])
     else:
-        xt_r_s_quote(state)
+        _store_string(value)(state)
 
 
 @flush_stdout
@@ -56,3 +72,17 @@ def parse_string(state: State, until: str) -> str:
         s += c
         c = state.next_char()
     return s
+
+
+def xt_r_char(state: State) -> None:
+    word: WORD = state.next_word(preserve_case=True)
+    state.ds.append(ord(word[0]))
+
+
+@compiling_word
+def xt_c_bracket_char(state: State) -> None:
+    if not state.is_compiling:
+        fatal("[CHAR] Interpreting a compile-only word")
+
+    word: WORD = state.next_word(preserve_case=True)
+    state.compile_to_current_definition([xt_r_push, ord(word[0])])

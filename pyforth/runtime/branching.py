@@ -7,10 +7,9 @@ from pyforth.runtime.utils import compiling_word, fatal
 def xt_c_if(state: State) -> None:
     if not state.is_compiling:
         fatal("IF: not in compile mode")
-    code = state.current_definition
-    code.append(primitives.xt_r_jz)
-    state.control_stack.append(("IF", len(code), ()))  # flag for following Then or Else
-    code.append(0)  # slot to be filled in
+    slot = state.compile_to_current_definition(primitives.xt_r_jz)
+    state.control_stack.append(("IF", slot, ()))  # flag for following Then or Else
+    state.compile_to_current_definition(0)  # slot to be filled in
 
 
 @compiling_word
@@ -23,11 +22,11 @@ def xt_c_else(state: State) -> None:
     if word != "IF":
         fatal(f"ELSE preceded by {word} (not IF)")
     assert isinstance(slot, POINTER)
-    code = state.current_definition
-    code.append(primitives.xt_r_jmp)
-    state.control_stack.append(("ELSE", len(code), ()))  # flag for following THEN
-    code.append(0)  # slot to be filled in
-    code[slot] = len(code)  # close JZ for IF
+
+    slot2 = state.compile_to_current_definition(primitives.xt_r_jmp)
+    state.control_stack.append(("ELSE", slot2, ()))  # flag for following THEN
+    state.compile_to_current_definition(0)  # slot to be filled in
+    state.close_jump_address(slot) # close JZ for IF
 
 
 @compiling_word
@@ -40,5 +39,5 @@ def xt_c_then(state: State) -> None:
     if word not in ("IF", "ELSE"):
         fatal(f"THEN preceded by {word} (not IF or ELSE)")
     assert isinstance(slot, POINTER)
-    code = state.current_definition
-    code[slot] = len(code)  # close JZ for IF or JMP for ELSE
+
+    state.close_jump_address(slot)  # close JZ for IF or JMP for ELSE
