@@ -39,6 +39,7 @@ class _InnerInterpreter(State):
         self._input_buffer: str = input_code
         self.heap = [0] * heap_size
         self._precision: int = DEFAULT_PRECISION
+        self._last_created_word: WORD = ''
 
     @property
     def interactive(self) -> bool:
@@ -146,6 +147,13 @@ class _InnerInterpreter(State):
         return self._is_compiling
 
     @property
+    def last_created_word(self) -> WORD:
+        return self._last_created_word
+
+    def reveal_created_word(self, word: WORD) -> None:
+        self._last_created_word = word
+
+    @property
     def past_end_of_code(self) -> bool:
         return not self.instruction_pointer < len(self.loaded_code)
 
@@ -171,6 +179,17 @@ class _InnerInterpreter(State):
     def _reset_execution_context(self) -> tuple[DEFINED_XT, POINTER]:
         code, p = cast(tuple[DEFINED_XT, POINTER], self._execution_contextes.pop())
         return code, p
+
+    def reset(self, heap_fence: POINTER) -> None:
+        self.input_code = ''
+        self.ds = []
+        self.rs = []
+        self.control_stack = []
+        self._last_created_word = ''
+        self.next_heap_address = heap_fence
+
+        assert not self.is_compiling
+        self.current_definition = DefinedExecutionToken()
 
 
 class Interpreter:
@@ -199,7 +218,7 @@ class Interpreter:
 
     def run(self, input_code: str = '', interactive: bool = False) -> None:
 
-        self._reset()
+        self._state.reset(self._heap_fence)
         self._state.interactive = interactive
 
         if input_code:
@@ -268,14 +287,3 @@ class Interpreter:
             with extension_path.open(mode='r') as stream:
                 code: str = ' \n'.join(stream.readlines())
                 self.run(input_code=code)
-
-    def _reset(self) -> None:
-        self._state.input_code = ''
-        self._state.ds = []
-        self._state.rs = []
-        self._state.control_stack = []
-        self._state.last_created_word = ''
-        self._state.next_heap_address = self._heap_fence
-
-        assert not self._state.is_compiling
-        self._state.current_definition = DefinedExecutionToken()

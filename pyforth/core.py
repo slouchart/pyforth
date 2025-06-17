@@ -43,7 +43,7 @@ class State(ABC):
     control_stack: CONTROL_STACK = []
     heap: list[LITERAL] = [0] * 20
     next_heap_address: int = 0
-    last_created_word: WORD = ''
+
     current_definition: DefinedExecutionToken = DefinedExecutionToken()
 
     @property
@@ -59,6 +59,13 @@ class State(ABC):
     @property
     @abstractmethod
     def is_compiling(self) -> bool: ...
+
+    @property
+    @abstractmethod
+    def last_created_word(self) -> WORD: ...
+
+    @abstractmethod
+    def reveal_created_word(self, word: WORD) -> None: ...
 
     @property
     @abstractmethod

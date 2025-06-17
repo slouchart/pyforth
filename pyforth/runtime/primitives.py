@@ -5,9 +5,10 @@ from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address, i
 
 
 def xt_r_create(state: State) -> None:
-    state.last_created_word = label = state.next_word()
+    label = state.next_word()
     # when created word is run, pushes its address
     state.execution_tokens[label] = DefinedExecutionToken([xt_r_push, state.next_heap_address])
+    state.reveal_created_word(label)
 
 
 def xt_r_does(state: State) -> POINTER:
@@ -83,7 +84,7 @@ def xt_c_semi(state: State) -> None:
     if word != "COLON":
         fatal(": not balanced with ;")
     assert isinstance(label, str)
-    state.last_created_word = label
+    state.reveal_created_word(label)
     set_exit_jmp_address(exit_, state.current_definition)
     state.execution_tokens[label] = DefinedExecutionToken(state.current_definition[:]) # Save word definition in rDict
     state.current_definition.clear()
