@@ -40,6 +40,11 @@ class _InnerInterpreter(State):
         self.heap = [0] * heap_size
         self._precision: int = DEFAULT_PRECISION
         self._last_created_word: WORD = ''
+        self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
+
+    @property
+    def current_definition(self) -> DefinedExecutionToken:
+        return self._current_definition
 
     @property
     def interactive(self) -> bool:
