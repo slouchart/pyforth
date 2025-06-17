@@ -51,6 +51,9 @@ class _InnerInterpreter(State):
         assert not self._current_definition
         self._current_definition = DefinedExecutionToken()
 
+    def close_jump_address(self, addr: POINTER) -> None:
+        self._current_definition[addr] = len(self._current_definition)
+
     def compile_to_current_definition(self, obj) -> POINTER:
         if isinstance(obj, list):
             self._current_definition += obj

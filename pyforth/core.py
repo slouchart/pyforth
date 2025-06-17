@@ -54,6 +54,9 @@ class State(ABC):
     @abstractmethod
     def compile_to_current_definition(self, obj) -> POINTER: ...
 
+    @abstractmethod
+    def close_jump_address(self, addr: POINTER) -> None: ...
+
     @property
     @abstractmethod
     def interactive(self) -> bool: ...
