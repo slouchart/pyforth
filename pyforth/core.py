@@ -44,6 +44,8 @@ class State(ABC):
     heap: list[LITERAL] = [0] * 20
     next_heap_address: int = 0
 
+    current_definition: DefinedExecutionToken = DefinedExecutionToken()
+
     @property
     @abstractmethod
     def interactive(self) -> bool: ...
