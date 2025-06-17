@@ -43,7 +43,7 @@ def xt_r_push(state: State) -> POINTER:
 
 def xt_r_run(state: State) -> POINTER:
     p: POINTER = state.instruction_pointer  # save current IP
-    word: WORD = cast(WORD, state.loaded_code[p])
+    word: WORD = cast(WORD, state.current_execution_token())
     try:
         xt_r: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[word])
         state.execute(xt_r)
