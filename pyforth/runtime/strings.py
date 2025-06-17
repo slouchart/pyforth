@@ -30,15 +30,6 @@ def xt_c_char_quote(state: State) -> None:
     state.current_definition += [_store_string(value, counted=True)]
 
 
-@intercept_stack_error
-def xt_r_count(state: State) -> None:
-    c_addr = state.ds.pop()
-    count: int = state.heap[c_addr]
-    c_addr = c_addr + 1
-    state.ds.append(c_addr)
-    state.ds.append(count)
-
-
 def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
 
     def _xt(state: State) -> None:
@@ -93,5 +84,5 @@ def xt_c_bracket_char(state: State) -> None:
     if not state.is_compiling:
         fatal("[CHAR] Interpreting a compile-only word")
 
-    word: WORD = state.next_word()
+    word: WORD = state.next_word(preserve_case=True)
     state.current_definition += [xt_r_push, ord(word[0])]

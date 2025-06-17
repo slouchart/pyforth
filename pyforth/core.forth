@@ -62,3 +62,7 @@ decimal
 : c, , ;
 : c@ @ ;
 : c! ! ;
+
+: count ( c-addr0 -- c-addr1 u )
+dup @ swap 1+ swap  \ no need to implement in Python
+;
