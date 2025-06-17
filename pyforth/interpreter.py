@@ -54,6 +54,10 @@ class _InnerInterpreter(State):
     def close_jump_address(self, addr: POINTER) -> None:
         self._current_definition[addr] = len(self._current_definition)
 
+    def complete_current_definition(self) -> None:
+        self.execution_tokens[self.last_created_word] = DefinedExecutionToken(self._current_definition[:])
+        self._current_definition.clear()
+
     def set_exit_jump_address(self, exit_: tuple[WORD, POINTER] | tuple[()]) -> None:
         if exit_:
             word, slot = exit_

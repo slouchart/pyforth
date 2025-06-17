@@ -60,6 +60,9 @@ class State(ABC):
     @abstractmethod
     def set_exit_jump_address(self, exit_: tuple[WORD, POINTER] | tuple[()]) -> None: ...
 
+    @abstractmethod
+    def complete_current_definition(self) -> None: ...
+
     @property
     @abstractmethod
     def interactive(self) -> bool: ...

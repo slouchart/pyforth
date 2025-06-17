@@ -86,8 +86,7 @@ def xt_c_semi(state: State) -> None:
     assert isinstance(label, str)
     state.reveal_created_word(label)
     state.set_exit_jump_address(exit_)
-    state.execution_tokens[label] = DefinedExecutionToken(state.current_definition[:]) # Save word definition in rDict
-    state.current_definition.clear()
+    state.complete_current_definition()
     state.reset_compile_flag()
 
 
