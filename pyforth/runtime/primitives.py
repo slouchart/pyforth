@@ -71,7 +71,7 @@ def xt_c_colon(state: State) -> None:
     label = state.next_word()
     state.control_stack.append(("COLON", label, ()))  # flag for following ";"
     state.set_compile_flag()  # enter "compile" mode
-    state.current_definition = DefinedExecutionToken()  # prepare code definition
+    state.prepare_current_definition()  # prepare code definition
 
 
 @compiling_word
@@ -120,7 +120,7 @@ def xt_c_postpone(state: State) -> None:
     if xt is None:
         fatal(f"POSTPONE: unknown word {word!r}")
     assert xt is not None  # so mypy is happy...
-    state.current_definition += compile_address(word, xt)
+    state.compile_to_current_definition(compile_address(word, xt))
 
 
 def xt_r_immediate(state: State) -> None:
@@ -149,7 +149,7 @@ def xt_c_recurse(state: State) -> None:
     else:
         fatal(f"RECURSE: control stack error")
 
-    state.current_definition += [xt_r_run, current_def]
+    state.compile_to_current_definition([xt_r_run, current_def])
 
 
 def xt_r_tick(state: State):
@@ -172,14 +172,14 @@ def xt_c_bracket_compile(state: State) -> None:
     if not state.is_compiling:
         fatal("[COMPILE] outside definition")
     word: WORD = state.next_word()
-    state.current_definition += [xt_c_compile, word]
+    state.compile_to_current_definition([xt_c_compile, word])
 
 
 @compiling_word
 def xt_c_compile(state: State) -> POINTER:
     assert state.is_compiling
     word: WORD = state.loaded_code[state.instruction_pointer]
-    state.current_definition += deferred_definition(word)
+    state.compile_to_current_definition(deferred_definition(word))
     return state.instruction_pointer + 1
 
 

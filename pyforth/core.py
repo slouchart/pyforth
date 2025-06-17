@@ -44,7 +44,15 @@ class State(ABC):
     heap: list[LITERAL] = [0] * 20
     next_heap_address: int = 0
 
-    current_definition: DefinedExecutionToken = DefinedExecutionToken()
+    @property
+    @abstractmethod
+    def current_definition(self) -> DefinedExecutionToken: ...
+
+    @abstractmethod
+    def prepare_current_definition(self) -> None: ...
+
+    @abstractmethod
+    def compile_to_current_definition(self, obj) -> POINTER: ...
 
     @property
     @abstractmethod

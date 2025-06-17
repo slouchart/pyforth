@@ -40,6 +40,23 @@ class _InnerInterpreter(State):
         self.heap = [0] * heap_size
         self._precision: int = DEFAULT_PRECISION
         self._last_created_word: WORD = ''
+        self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
+
+    @property
+    def current_definition(self) -> DefinedExecutionToken:
+        return self._current_definition
+
+    def prepare_current_definition(self) -> None:
+        assert self.is_compiling
+        assert not self._current_definition
+        self._current_definition = DefinedExecutionToken()
+
+    def compile_to_current_definition(self, obj) -> POINTER:
+        if isinstance(obj, list):
+            self._current_definition += obj
+        else:
+            self._current_definition.append(obj)
+        return len(self._current_definition)
 
     @property
     def interactive(self) -> bool:
@@ -189,7 +206,7 @@ class _InnerInterpreter(State):
         self.next_heap_address = heap_fence
 
         assert not self.is_compiling
-        self.current_definition = DefinedExecutionToken()
+        self._current_definition = DefinedExecutionToken()
 
 
 class Interpreter:
@@ -250,19 +267,19 @@ class Interpreter:
             if immediate:
                 execute_immediate(self._state, xt)
             elif self._state.is_compiling:  #  state entered with : and exited by ;
-                self._state.current_definition += compile_address(word, xt)
+                self._state.compile_to_current_definition(compile_address(word, xt))
             else:
                 execute_immediate(self._state, xt)
         else:
             if self.is_literal(word):
                 action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self._state.word_to_int(word)])
                 if self._state.is_compiling:
-                    self._state.current_definition += action
+                    self._state.compile_to_current_definition(action)
                 else:
                     self._state.execute(action)
             else:  # defer
                 if self._state.is_compiling:
-                    self._state.current_definition += deferred_definition(word)
+                    self._state.compile_to_current_definition(deferred_definition(word))
                 else:
                     fatal(f"Unknown word: {word!r}")
 
