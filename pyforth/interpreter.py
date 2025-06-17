@@ -186,10 +186,10 @@ class _InnerInterpreter(State):
 
     @property
     def past_end_of_code(self) -> bool:
-        return not self.instruction_pointer < len(self.loaded_code)
+        return not self.instruction_pointer < len(self.current_defined_execution_token)
 
     def _next_exec_token(self) -> NATIVE_XT:
-        func = cast(NATIVE_XT, self.loaded_code[self.instruction_pointer])
+        func = cast(NATIVE_XT, self.current_execution_token)
         self._set_instruction_pointer(self.instruction_pointer + 1)
         return func
 
@@ -201,11 +201,12 @@ class _InnerInterpreter(State):
         self._execution_contextes[-1][1] = p
 
     @property
-    def loaded_code(self) -> DEFINED_XT:
+    def current_defined_execution_token(self) -> DEFINED_XT:
         return cast(DEFINED_XT, self._execution_contextes[-1][0])
 
+    @property
     def current_execution_token(self) -> XT_ATOM:
-        return self._execution_contextes[-1][0][self.instruction_pointer]
+        return cast(DEFINED_XT, self._execution_contextes[-1][0])[self.instruction_pointer]
 
     def _set_execution_context(self, code: DEFINED_XT) -> None:
         self._execution_contextes.append([code, 0])

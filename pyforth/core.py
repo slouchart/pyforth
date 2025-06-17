@@ -117,7 +117,8 @@ class State(ABC):
 
     @property
     @abstractmethod
-    def loaded_code(self) -> DefinedExecutionToken: ...
-
-    @abstractmethod
     def current_execution_token(self) -> XT_ATOM: ...
+
+    @property
+    @abstractmethod
+    def current_defined_execution_token(self) -> DEFINED_XT: ...

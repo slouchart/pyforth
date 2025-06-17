@@ -13,18 +13,19 @@ def xt_r_create(state: State) -> None:
 
 def xt_r_does(state: State) -> POINTER:
     assert isinstance(state.execution_tokens[state.last_created_word], list)
-    xt_r: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[state.last_created_word])
-    xt_r += state.loaded_code[state.instruction_pointer:]  # rest of words belong to created words runtime
-    return len(state.loaded_code)  # jump p over these
+    ref_xt: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[state.last_created_word])
+    # rest of words belong to created words runtime
+    ref_xt += state.current_defined_execution_token[state.instruction_pointer:]
+    return len(state.current_defined_execution_token)  # jump p over these
 
 
 def xt_r_jmp(state: State) -> POINTER:
-    return cast(POINTER, state.current_execution_token())
+    return cast(POINTER, state.current_execution_token)
 
 
 def xt_r_jz(state: State) -> POINTER:
     return (
-        cast(POINTER, state.current_execution_token()),
+        cast(POINTER, state.current_execution_token),
         state.instruction_pointer + 1
     )[state.ds.pop()]
 
@@ -32,18 +33,18 @@ def xt_r_jz(state: State) -> POINTER:
 def xt_r_jnz(state: State) -> POINTER:
     return (
         state.instruction_pointer + 1,
-        cast(POINTER, state.current_execution_token())
+        cast(POINTER, state.current_execution_token)
     )[state.ds.pop()]
 
 
 def xt_r_push(state: State) -> POINTER:
-    state.ds.append(cast(LITERAL, state.current_execution_token()))
+    state.ds.append(cast(LITERAL, state.current_execution_token))
     return state.instruction_pointer + 1
 
 
 def xt_r_run(state: State) -> POINTER:
     p: POINTER = state.instruction_pointer  # save current IP
-    word: WORD = cast(WORD, state.current_execution_token())
+    word: WORD = cast(WORD, state.current_execution_token)
     try:
         xt_r: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[word])
         state.execute(xt_r)
@@ -53,7 +54,7 @@ def xt_r_run(state: State) -> POINTER:
 
 
 def xt_r_push_rs(state: State) -> POINTER:
-    state.rs.append(cast(LITERAL, state.current_execution_token()))
+    state.rs.append(cast(LITERAL, state.current_execution_token))
     return state.instruction_pointer + 1
 
 
@@ -177,7 +178,7 @@ def xt_c_bracket_compile(state: State) -> None:
 @compiling_word
 def xt_c_compile(state: State) -> POINTER:
     assert state.is_compiling
-    word: WORD = state.current_execution_token()
+    word: WORD = cast(WORD, state.current_execution_token)
     state.compile_to_current_definition(deferred_definition(word))
     return state.instruction_pointer + 1
 
