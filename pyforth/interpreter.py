@@ -42,10 +42,6 @@ class _InnerInterpreter(State):
         self._last_created_word: WORD = ''
         self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
 
-    @property
-    def current_definition(self) -> DefinedExecutionToken:
-        return self._current_definition
-
     def prepare_current_definition(self) -> None:
         assert self.is_compiling
         assert not self._current_definition
