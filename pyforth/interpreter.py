@@ -65,11 +65,15 @@ class _InnerInterpreter(State):
                 fatal(f"Unexpected word in place of EXIT: {word!r}")
             self._current_definition[slot] = len(self._current_definition)
 
-    def compile_to_current_definition(self, obj) -> POINTER:
+    def compile_to_current_definition(self, obj = None) -> POINTER:
+        if obj is None:
+            return len(self._current_definition)
+
         if isinstance(obj, list):
             self._current_definition += obj
         else:
             self._current_definition.append(obj)
+
         return len(self._current_definition)
 
     @property

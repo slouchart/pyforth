@@ -1,15 +1,15 @@
 from pyforth.core import POINTER, State
 
 from pyforth.runtime import primitives
-from pyforth.runtime.utils import compiling_word, fatal, set_exit_jmp_address
+from pyforth.runtime.utils import compiling_word, fatal
 
 
 @compiling_word
 def xt_c_begin(state: State) -> None:
     if not state.is_compiling:
         fatal("BEGIN: not in compile mode")
-    code = state.current_definition
-    state.control_stack.append(("BEGIN", len(code), ()))  # flag for following UNTIL/REPEAT
+    slot = state.compile_to_current_definition()
+    state.control_stack.append(("BEGIN", slot, ()))  # flag for following UNTIL/REPEAT
 
 
 @compiling_word
@@ -25,7 +25,7 @@ def xt_c_until(state: State) -> None:
     code = state.current_definition
     code.append(primitives.xt_r_jz)
     code.append(slot)
-    set_exit_jmp_address(exit_, code)
+    state.set_exit_jump_address(exit_)
 
 
 @compiling_word
@@ -64,7 +64,7 @@ def xt_c_repeat(state: State) -> None:
 
     code[slot2] = len(code)  # close JNZ for WHILE
 
-    set_exit_jmp_address(exit_, code)
+    state.set_exit_jump_address(exit_)
 
 
 @compiling_word
@@ -81,4 +81,4 @@ def xt_c_again(state: State) -> None:
     code.append(primitives.xt_r_jmp)
     code.append(slot)
 
-    set_exit_jmp_address(exit_, code)
+    state.set_exit_jump_address(exit_)

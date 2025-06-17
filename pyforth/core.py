@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TypeAlias, Optional, TypeVar, Generic
+from typing import TypeAlias, Optional, TypeVar, Generic, Any
 
 T = TypeVar('T')
 
@@ -52,7 +52,7 @@ class State(ABC):
     def prepare_current_definition(self) -> None: ...
 
     @abstractmethod
-    def compile_to_current_definition(self, obj) -> POINTER: ...
+    def compile_to_current_definition(self, obj: Optional[Any] = None) -> POINTER: ...
 
     @abstractmethod
     def close_jump_address(self, addr: POINTER) -> None: ...
