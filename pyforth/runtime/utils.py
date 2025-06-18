@@ -2,9 +2,19 @@ import sys
 from functools import wraps
 from typing import Callable, Optional, Any, cast
 
-from pyforth.core import DEFINED_XT, NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
+from pyforth.core import NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
 from pyforth.core import ForthCompilationError
 
+
+def define_word(word: WORD, xt: NATIVE_XT | None = None) -> NATIVE_XT | Callable[[NATIVE_XT], NATIVE_XT]:
+
+    def decorator(f: NATIVE_XT) -> NATIVE_XT:
+        setattr(f, '_word', word)
+        return f
+
+    if xt is None:
+        return decorator
+    return decorator(xt)
 
 
 def fatal(msg: str) -> None:
@@ -34,15 +44,6 @@ def pass_both_stacks(func: Callable[[STACK, STACK], None]) -> NATIVE_XT:
     return wrapper
 
 
-def pass_data_stack(func: Callable[[STACK], Optional[POINTER]]) -> NATIVE_XT:
-
-    @wraps(func)
-    def wrapper(state: State) -> Optional[POINTER]:
-        return func(state.ds)
-
-    return wrapper
-
-
 def pure_stack_operation(func: Callable[[STACK], None]) -> NATIVE_XT:
 
     @wraps(func)
@@ -52,7 +53,7 @@ def pure_stack_operation(func: Callable[[STACK], None]) -> NATIVE_XT:
     return wrapper
 
 
-def compiling_word(func: Callable[[State], Optional[POINTER]]) -> NATIVE_XT:
+def compiling_word(func: NATIVE_XT) -> NATIVE_XT:
 
     @wraps(func)
     def wrapper(state: State) -> Optional[POINTER]:
@@ -66,9 +67,9 @@ def compiling_word(func: Callable[[State], Optional[POINTER]]) -> NATIVE_XT:
 def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(state: State) -> Optional[POINTER]:
         try:
-            return func(*args, **kwargs)
+            return func(state)
         except IndexError as err:
             if "pop from empty list" in str(err).lower():
                 raise StackUnderflowError("Stack underflow error") from None

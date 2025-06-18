@@ -1,7 +1,8 @@
 from pyforth.core import STACK
-from .utils import pure_stack_operation, intercept_stack_error
+from .utils import pure_stack_operation, intercept_stack_error, define_word
 
 
+@define_word('+')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_add(ds: STACK) -> None:
