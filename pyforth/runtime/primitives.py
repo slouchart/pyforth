@@ -172,15 +172,16 @@ def xt_c_bracket_compile(state: State) -> None:
     if not state.is_compiling:
         fatal("[COMPILE] outside definition")
     word: WORD = state.next_word()
-    state.compile_to_current_definition([xt_c_compile, word])
-
-
-@compiling_word
-def xt_c_compile(state: State) -> POINTER:
-    assert state.is_compiling
-    word: WORD = cast(WORD, state.current_execution_token)
-    state.compile_to_current_definition(deferred_definition(word))
-    return state.instruction_pointer + 1
+    found, immediate, xt = search_word(state.execution_tokens, word)
+    if found:
+        if immediate:
+            state.compile_to_current_definition(xt)
+        else:
+            def _xt(_state: State) -> None:
+                _state.compile_to_current_definition(compile_address(word, xt))
+            state.compile_to_current_definition(_xt)
+    else:
+        raise ForthCompilationError(f"Unknown word: {word!r}")
 
 
 def execute_immediate(state: State, func: XT) -> Optional[POINTER]:
