@@ -59,7 +59,6 @@ def compiling_word(func: NATIVE_XT) -> NATIVE_XT:
 
     @wraps(func)
     def wrapper(state: State) -> Optional[POINTER]:
-        assert state.is_compiling
         return func(state)
 
     setattr(wrapper, '_immediate', True)

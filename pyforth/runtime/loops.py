@@ -1,7 +1,7 @@
 from pyforth.core import POINTER, State
 
 from pyforth.runtime import primitives
-from pyforth.runtime.utils import compiling_word, define_word
+from pyforth.runtime.utils import compiling_word, fatal, define_word
 
 
 @define_word("begin")
