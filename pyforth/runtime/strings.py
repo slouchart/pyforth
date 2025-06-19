@@ -1,7 +1,7 @@
 import sys
 from typing import Final
 
-from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT
+from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT, Compiler
 from .primitives import xt_r_push
 from .utils import flush_stdout, compiling_word, fatal, define_word, immediate_word
 
@@ -10,7 +10,7 @@ QUOTE: Final[str] = r'"'
 
 @define_word('."')
 @compiling_word
-def xt_c_dot_quote(state: State) -> None:
+def xt_c_dot_quote(state: State, compiler: Compiler) -> None:
     value: str = parse_string(state, until=QUOTE)
 
     @flush_stdout
@@ -18,18 +18,18 @@ def xt_c_dot_quote(state: State) -> None:
         sys.stdout.write(value)
 
     if state.is_compiling:
-        state.compiler.compile_to_current_definition([xt_r_dot_quote,])
+        compiler.compile_to_current_definition([xt_r_dot_quote,])
     else:
         xt_r_dot_quote(state)
 
 
 @define_word('c"')
 @compiling_word
-def xt_c_char_quote(state: State) -> None:
+def xt_c_char_quote(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("C\" Interpreting a compile-only word")
     value: str = parse_string(state, until=QUOTE)
-    state.compiler.compile_to_current_definition([_store_string(value, counted=True)])
+    compiler.compile_to_current_definition([_store_string(value, counted=True)])
 
 
 def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
@@ -86,9 +86,9 @@ def xt_r_char(state: State) -> None:
 
 @define_word("[char]")
 @compiling_word
-def xt_c_bracket_char(state: State) -> None:
+def xt_c_bracket_char(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("[CHAR] Interpreting a compile-only word")
 
     word: WORD = state.next_word(preserve_case=True)
-    state.compiler.compile_to_current_definition([xt_r_push, ord(word[0])])
+    compiler.compile_to_current_definition([xt_r_push, ord(word[0])])

@@ -82,11 +82,10 @@ def xt_c_colon(state: State) -> None:
 
 @define_word(";")
 @compiling_word
-def xt_c_semi(state: State) -> None:
+def xt_c_semi(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("SEMICOLON: Not in compile mode")
 
-    compiler: Compiler = state.compiler
     if not compiler.control_stack:
         fatal("No : for ; to match")
     label = compiler.control_stack.pop()
@@ -104,7 +103,7 @@ def xt_r_exit(state: State) -> POINTER:
 
 @define_word("postpone")
 @compiling_word
-def xt_c_postpone(state: State) -> None:
+def xt_c_postpone(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("POSTPONE: Not in compile mode")
     word: WORD = state.next_word()
@@ -112,7 +111,7 @@ def xt_c_postpone(state: State) -> None:
     if xt is None:
         fatal(f"POSTPONE: unknown word {word!r}")
     assert xt is not None  # so mypy is happy...
-    state.compiler.compile_to_current_definition(compile_address(word, xt))
+    compiler.compile_to_current_definition(compile_address(word, xt))
 
 
 @define_word("immediate")
@@ -128,11 +127,10 @@ def xt_r_immediate(state: State) -> None:
 
 @define_word("recurse")
 @compiling_word
-def xt_c_recurse(state: State) -> None:
+def xt_c_recurse(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("RECURSE outside definition")
 
-    compiler: Compiler = state.compiler
     current_def: WORD = cast(WORD, compiler.control_stack[0])
     compiler.compile_to_current_definition([xt_r_run, current_def])
 
@@ -156,11 +154,10 @@ def xt_r_execute(state: State) -> Optional[POINTER]:
 
 @define_word("[compile]")
 @compiling_word
-def xt_c_bracket_compile(state: State) -> None:
+def xt_c_bracket_compile(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("[COMPILE] outside definition")
 
-    compiler: Compiler = state.compiler
     word: WORD = state.next_word()
     found, immediate, xt = search_word(state.execution_tokens, word)
     if found:

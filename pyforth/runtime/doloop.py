@@ -5,8 +5,7 @@ from pyforth.runtime.utils import compiling_word, fatal, define_word
 
 @define_word("do")
 @compiling_word
-def xt_c_do(state: State) -> None:
-    compiler: Compiler = state.compiler
+def xt_c_do(_: State, compiler: Compiler) -> None:
     do_sys: POINTER = compiler.compile_to_current_definition(
         [
             stacks.xt_r_swap,
@@ -19,8 +18,7 @@ def xt_c_do(state: State) -> None:
 
 @define_word("loop")
 @compiling_word
-def xt_c_loop(state: State) -> None:
-    compiler: Compiler = state.compiler
+def xt_c_loop(_: State, compiler: Compiler) -> None:
     do_sys = compiler.control_stack.pop()
     compiler.compile_to_current_definition(
         [
@@ -44,9 +42,9 @@ def xt_c_loop(state: State) -> None:
 def loop_index_factory(expected_nested_level: int) -> XT:
 
     @compiling_word
-    def xt_r_loop_index(state: State) -> None:
+    def xt_r_loop_index(_: State, compiler: Compiler) -> None:
 
-        state.compiler.compile_to_current_definition(
+        compiler.compile_to_current_definition(
             [
                 stacks.xt_r_from_rs,  # move around outermost do-loop params
                 stacks.xt_r_from_rs,

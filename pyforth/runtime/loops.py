@@ -8,16 +8,14 @@ from pyforth.runtime.utils import compiling_word, fatal, define_word
 
 @define_word("begin")
 @compiling_word
-def xt_c_begin(state: State) -> None:
-    compiler: Compiler = state.compiler
+def xt_c_begin(_: State, compiler: Compiler) -> None:
     dest: POINTER = compiler.compile_to_current_definition()
     compiler.control_stack.append(dest)  # flag for following UNTIL/REPEAT
 
 
 @define_word("until")
 @compiling_word
-def xt_c_until(state: State) -> None:
-    compiler: Compiler = state.compiler
+def xt_c_until(_: State, compiler: Compiler) -> None:
     dest = compiler.control_stack.pop()
     compiler.compile_to_current_definition(
         [
@@ -29,8 +27,7 @@ def xt_c_until(state: State) -> None:
 
 @define_word("while")
 @compiling_word
-def xt_c_while(state: State) -> None:
-    compiler: Compiler = state.compiler
+def xt_c_while(_: State, compiler: Compiler) -> None:
     dest: POINTER = cast(POINTER, compiler.control_stack.pop())
     orig: POINTER = compiler.compile_to_current_definition(primitives.xt_r_jz)
     compiler.control_stack.append(orig)  # flag for following REPEAT
@@ -40,9 +37,7 @@ def xt_c_while(state: State) -> None:
 
 @define_word("repeat")
 @compiling_word
-def xt_c_repeat(state: State) -> None:
-
-    compiler: Compiler = state.compiler
+def xt_c_repeat(_: State, compiler: Compiler) -> None:
     dest: POINTER = cast(POINTER, compiler.control_stack.pop())
     orig: POINTER = cast(POINTER, compiler.control_stack.pop())
     compiler.compile_to_current_definition(
@@ -56,8 +51,7 @@ def xt_c_repeat(state: State) -> None:
 
 @define_word("again")
 @compiling_word
-def xt_c_again(state: State) -> None:
-    compiler: Compiler = state.compiler
+def xt_c_again(_: State, compiler: Compiler) -> None:
     dest = compiler.control_stack.pop()
     compiler.compile_to_current_definition(
         [
