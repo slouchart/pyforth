@@ -42,7 +42,7 @@ class _InnerInterpreter(State):
         self._last_created_word: WORD = ''
         self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
         self._dictionary: dict[WORD, XT] = {}
-        load_dictionary(self._dictionary)
+        load_dictionary(self._dictionary, source_pkg='pyforth.runtime')
 
     def prepare_current_definition(self) -> None:
         assert self.is_compiling
@@ -55,13 +55,6 @@ class _InnerInterpreter(State):
     def complete_current_definition(self) -> None:
         self.execution_tokens[self.last_created_word] = DefinedExecutionToken(self._current_definition[:])
         self._current_definition.clear()
-
-    def set_exit_jump_address(self, exit_: tuple[WORD, POINTER] | tuple[()]) -> None:
-        if exit_:
-            word, slot = exit_
-            if word != "EXIT":
-                fatal(f"Unexpected word in place of EXIT: {word!r}")
-            self._current_definition[slot] = len(self._current_definition)
 
     def compile_to_current_definition(self, obj = None) -> POINTER:
         if obj is None:

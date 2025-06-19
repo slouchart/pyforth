@@ -1,8 +1,11 @@
 import importlib
 import inspect
+from typing import Final, Sequence
+
 from pyforth.core import WORD, XT
 
-modules = (
+
+MODULES: Final[Sequence[str]] = (
     'arithmetic',
     'branching',
     'comments',
@@ -19,9 +22,13 @@ modules = (
 )
 
 
-def load_dictionary(dictionary: dict[WORD, XT]):
+def load_dictionary(
+    dictionary: dict[WORD, XT],
+    modules: Sequence[str] = MODULES,
+    source_pkg: str = ''
+):
     for module_name in modules:
-        module = importlib.import_module(f".{module_name}", package="pyforth.runtime")
+        module = importlib.import_module(f".{module_name}", package=source_pkg)
         for name, obj in inspect.getmembers(module, inspect.isfunction):
             if hasattr(obj, "_word"):
                 dictionary[getattr(obj, "_word")] = obj

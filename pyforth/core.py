@@ -17,7 +17,7 @@ STACK: TypeAlias = list
 LITERAL: TypeAlias = int
 DATA_STACK = STACK[LITERAL]
 RETURN_STACK = STACK[LITERAL]
-CONTROL_STRUCT = tuple[WORD, POINTER | WORD, tuple[WORD, POINTER] | tuple[()]]
+CONTROL_STRUCT = tuple[WORD, POINTER | WORD]
 CONTROL_STACK = STACK[CONTROL_STRUCT]
 NATIVE_XT = Callable[["State"], Optional[POINTER]]
 XT_ATOM = NATIVE_XT | LITERAL | WORD
@@ -53,9 +53,6 @@ class State(ABC):
 
     @abstractmethod
     def close_jump_address(self, addr: POINTER) -> None: ...
-
-    @abstractmethod
-    def set_exit_jump_address(self, exit_: tuple[WORD, POINTER] | tuple[()]) -> None: ...
 
     @abstractmethod
     def complete_current_definition(self) -> None: ...

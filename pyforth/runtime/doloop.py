@@ -22,7 +22,7 @@ def xt_c_do(state: State) -> None:
             stacks.xt_r_to_rs  # push starting index to rs
         ]
     )
-    state.control_stack.append(("DO", slot, ()))  # flag for next LOOP
+    state.control_stack.append(("DO", slot))  # flag for next LOOP
 
 
 @define_word("loop")
@@ -33,7 +33,7 @@ def xt_c_loop(state: State) -> None:
         fatal("LOOP: not in compile mode")
     if not state.control_stack:
         fatal("No DO for LOOP to match")
-    word, slot, exit_, *_ = state.control_stack.pop()
+    word, slot = state.control_stack.pop()
     if word != "DO":
         fatal(f"LOOP preceded by {word} (not DO)")
     assert isinstance(slot, POINTER)
@@ -52,7 +52,6 @@ def xt_c_loop(state: State) -> None:
         ]
     )
 
-    state.set_exit_jump_address(exit_)
     state.compile_to_current_definition(
         [
             stacks.xt_r_from_rs,  # UN-LOOP

@@ -73,7 +73,7 @@ def xt_c_colon(state: State) -> None:
     if state.control_stack:
         fatal(f": inside Control stack: {state.control_stack}")
     label = state.next_word()
-    state.control_stack.append(("COLON", label, ()))  # flag for following ";"
+    state.control_stack.append(("COLON", label))  # flag for following ";"
     state.set_compile_flag()  # enter "compile" mode
     state.prepare_current_definition()  # prepare code definition
 
@@ -85,35 +85,19 @@ def xt_c_semi(state: State) -> None:
         fatal("SEMICOLON: Not in compile mode")
     if not state.control_stack:
         fatal("No : for ; to match")
-    word, label, exit_, *_ = state.control_stack.pop()
+    word, label = state.control_stack.pop()
     if word != "COLON":
         fatal(": not balanced with ;")
     assert isinstance(label, str)
     state.reveal_created_word(label)
-    state.set_exit_jump_address(exit_)
     state.complete_current_definition()
     state.reset_compile_flag()
 
 
 @define_word("exit")
-@compiling_word
-def xt_c_exit(state: State) -> None:
-
-    def _exit(_state: State):
-        if not _state.control_stack:
-            fatal("EXIT outside block")
-        word, label, _ = _state.control_stack.pop()
-        if word in ('IF', 'WHILE'):
-            _exit(_state)
-            _state.control_stack.append((word, label, _))
-        else:
-            if word not in ('COLON', 'BEGIN', 'DO'):
-                fatal(f"EXIT: Unexpected block structure {word}")
-            slot = _state.compile_to_current_definition(xt_r_jmp)
-            _state.control_stack.append((word, label, ('EXIT', slot)))
-            _state.compile_to_current_definition(0)
-
-    _exit(state)
+def xt_r_exit(state: State) -> POINTER:
+    ptr: POINTER = len(state.current_defined_execution_token)
+    return ptr
 
 
 @define_word("postpone")

@@ -10,7 +10,7 @@ def xt_c_begin(state: State) -> None:
     if not state.is_compiling:
         fatal("BEGIN: not in compile mode")
     slot = state.compile_to_current_definition()
-    state.control_stack.append(("BEGIN", slot, ()))  # flag for following UNTIL/REPEAT
+    state.control_stack.append(("BEGIN", slot))  # flag for following UNTIL/REPEAT
 
 
 @define_word("until")
@@ -20,7 +20,7 @@ def xt_c_until(state: State) -> None:
         fatal("UNTIL: not in compile mode")
     if not state.control_stack:
         fatal("No BEGIN for UNTIL to match")
-    word, slot, exit_ = state.control_stack.pop()
+    word, slot = state.control_stack.pop()
     if word != "BEGIN":
         fatal(f"UNTIL preceded by {word} (not BEGIN)")
 
@@ -30,7 +30,6 @@ def xt_c_until(state: State) -> None:
             slot
         ]
     )
-    state.set_exit_jump_address(exit_)
 
 
 @define_word("while")
@@ -40,7 +39,7 @@ def xt_c_while(state: State) -> None:
         fatal("WHILE: not in compile mode")
 
     ptr = state.compile_to_current_definition(primitives.xt_r_jz)
-    state.control_stack.append(("WHILE", ptr, ()))  # flag for following REPEAT
+    state.control_stack.append(("WHILE", ptr))  # flag for following REPEAT
     state.compile_to_current_definition(0)  # to be filled in by REPEAT
 
 
@@ -52,7 +51,7 @@ def xt_c_repeat(state: State) -> None:
         fatal("REPEAT: not in compile mode")
     if not state.control_stack:
         fatal("No WHILE for REPEAT to match")
-    word, slot2, _ = state.control_stack.pop()
+    word, slot2 = state.control_stack.pop()
     if word != "WHILE":
         fatal(f"REPEAT preceded by {word} (not WHILE)")
     assert isinstance(slot2, POINTER)
@@ -60,7 +59,7 @@ def xt_c_repeat(state: State) -> None:
     if not state.control_stack:
         fatal('No BEGIN for REPEAT to match')
 
-    word, slot1, exit_ = state.control_stack.pop()
+    word, slot1 = state.control_stack.pop()
     if word != 'BEGIN':
         fatal(f"WHILE-REPEAT preceded by {word} (not BEGIN)")
 
@@ -71,7 +70,6 @@ def xt_c_repeat(state: State) -> None:
         ]
     )
     state.close_jump_address(slot2)  # close JNZ for WHILE
-    state.set_exit_jump_address(exit_)
 
 
 @define_word("again")
@@ -81,7 +79,7 @@ def xt_c_again(state: State) -> None:
         fatal("AGAIN: not in compile mode")
     if not state.control_stack:
         fatal("No BEGIN for AGAIN to match")
-    word, slot, exit_ = state.control_stack.pop()
+    word, slot = state.control_stack.pop()
     if word != "BEGIN":
         fatal(f"AGAIN preceded by {word} (not BEGIN)")
 
@@ -91,4 +89,3 @@ def xt_c_again(state: State) -> None:
             slot
         ]
     )
-    state.set_exit_jump_address(exit_)

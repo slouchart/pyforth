@@ -68,25 +68,14 @@ def test_bootstrap(interpreter, capsys):
         (': main dup exit 2 + ; 0 main', [0, 0], []),
         (': main begin dup 3 = if exit then 1 +  false until ; 1 main', [3], []),
         (': main begin dup 3 < while 1 + dup 3 = if exit then repeat ; 1 main', [3], []),
-        (': main begin dup 3 = if exit then true while 1 + repeat ; 1 main', [3], [])
+        (': main begin dup 3 = if exit then true while 1 + repeat ; 1 main', [3], []),
+        (': main begin begin 1 = if exit else 2 then 3 exit again 4 again 5 ; 1 main 0 main', [2, 3], [])
     ]
 )
 def test_exit_loops(interpreter, program, data_stack, return_stack):
     interpreter.run(program)
     assert interpreter.data_stack == data_stack
     assert interpreter.return_stack == return_stack
-
-
-@pytest.mark.parametrize(
-    'program, data_stack, return_stack', [
-        (': main 1 1 do i 1 = if exit then loop ; main', [], [])
-    ]
-)
-def test_exit_do_loop(interpreter, program, data_stack, return_stack):
-    interpreter.run(program)
-    assert interpreter.data_stack == data_stack
-    assert interpreter.return_stack == return_stack
-
 
 
 @pytest.mark.parametrize(
