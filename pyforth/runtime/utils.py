@@ -1,15 +1,16 @@
-import re
 import sys
-from functools import wraps, partial
+from functools import wraps
 from typing import Callable, Optional, Any, cast
 
 from pyforth.core import NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
 from pyforth.core import ForthCompilationError
 
 
+# TODO precise annotations needed here
 def define_word(word: WORD, xt: Any | None = None) -> Any:
 
     def decorator(f: Any) -> Any:
+        assert callable(f)
         setattr(f, '_word', word)
         return f
 
