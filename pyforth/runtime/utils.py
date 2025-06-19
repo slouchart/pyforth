@@ -69,7 +69,7 @@ def compiling_word(func: NATIVE_XT) -> NATIVE_XT:
     @wraps(func)
     def wrapper(state: State) -> Optional[POINTER]:
         if not state.is_compiling:
-            pass
+            fatal(f"Outside compilation context")
         return func(state)
 
     return immediate_word(wrapper)

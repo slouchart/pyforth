@@ -3,7 +3,7 @@ from typing import Final
 
 from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT
 from .primitives import xt_r_push
-from .utils import flush_stdout, compiling_word, fatal, intercept_stack_error, define_word
+from .utils import flush_stdout, compiling_word, fatal, define_word, immediate_word
 
 QUOTE: Final[str] = r'"'
 
@@ -50,7 +50,7 @@ def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
 
 
 @define_word('s"')
-@compiling_word
+@immediate_word
 def xt_c_s_quote(state: State) -> None:
     value: str = parse_string(state, until=QUOTE)
 
