@@ -18,7 +18,7 @@ def xt_c_dot_quote(state: State) -> None:
         sys.stdout.write(value)
 
     if state.is_compiling:
-        state.compile_to_current_definition([xt_r_dot_quote,])
+        state.compiler.compile_to_current_definition([xt_r_dot_quote,])
     else:
         xt_r_dot_quote(state)
 
@@ -29,7 +29,7 @@ def xt_c_char_quote(state: State) -> None:
     if not state.is_compiling:
         fatal("C\" Interpreting a compile-only word")
     value: str = parse_string(state, until=QUOTE)
-    state.compile_to_current_definition([_store_string(value, counted=True)])
+    state.compiler.compile_to_current_definition([_store_string(value, counted=True)])
 
 
 def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
@@ -55,7 +55,7 @@ def xt_c_s_quote(state: State) -> None:
     value: str = parse_string(state, until=QUOTE)
 
     if state.is_compiling:
-        state.compile_to_current_definition([_store_string(value),])
+        state.compiler.compile_to_current_definition([_store_string(value),])
     else:
         _store_string(value)(state)
 
@@ -91,4 +91,4 @@ def xt_c_bracket_char(state: State) -> None:
         fatal("[CHAR] Interpreting a compile-only word")
 
     word: WORD = state.next_word(preserve_case=True)
-    state.compile_to_current_definition([xt_r_push, ord(word[0])])
+    state.compiler.compile_to_current_definition([xt_r_push, ord(word[0])])

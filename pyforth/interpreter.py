@@ -6,7 +6,7 @@ from typing import cast, Sequence, Generator, Final
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
-    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM
+    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler
 from .core import ForthCompilationError, State
 from .runtime import load_dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
@@ -18,6 +18,38 @@ MEMORY_SIZE: Final[int] = 64
 EXTENSIONS: Sequence[str] = (
     'core.forth',
 )
+
+
+class _Compiler(Compiler):
+
+    def __init__(self, state: State):
+        self._interpreter: State = state
+        self._current_definition: DefinedExecutionToken[XT_ATOM] = DefinedExecutionToken()
+
+    def prepare_current_definition(self) -> None:
+        assert self._interpreter.is_compiling
+        assert not self._current_definition
+        self._current_definition = DefinedExecutionToken()
+
+    def compile_to_current_definition(self, obj = None) -> POINTER:
+        if obj is None:
+            return len(self._current_definition)
+
+        if isinstance(obj, list):
+            self._current_definition += obj
+        else:
+            self._current_definition.append(obj)
+
+        return len(self._current_definition)
+
+    def close_jump_address(self, addr: POINTER) -> None:
+        self._current_definition[addr] = len(self._current_definition)
+
+    def complete_current_definition(self) -> None:
+        interpreter = self._interpreter
+        new_xt: DefinedExecutionToken[XT_ATOM] = DefinedExecutionToken(self._current_definition[:])
+        interpreter.execution_tokens[interpreter.last_created_word] = cast(DEFINED_XT, new_xt)
+        self._current_definition.clear()
 
 
 class _InnerInterpreter(State):
@@ -40,32 +72,14 @@ class _InnerInterpreter(State):
         self.heap = [0] * heap_size
         self._precision: int = DEFAULT_PRECISION
         self._last_created_word: WORD = ''
-        self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
+
         self._dictionary: dict[WORD, XT] = {}
         load_dictionary(self._dictionary, source_pkg='pyforth.runtime')
+        self._compiler = _Compiler(self)
 
-    def prepare_current_definition(self) -> None:
-        assert self.is_compiling
-        assert not self._current_definition
-        self._current_definition = DefinedExecutionToken()
-
-    def close_jump_address(self, addr: POINTER) -> None:
-        self._current_definition[addr] = len(self._current_definition)
-
-    def complete_current_definition(self) -> None:
-        self.execution_tokens[self.last_created_word] = DefinedExecutionToken(self._current_definition[:])
-        self._current_definition.clear()
-
-    def compile_to_current_definition(self, obj = None) -> POINTER:
-        if obj is None:
-            return len(self._current_definition)
-
-        if isinstance(obj, list):
-            self._current_definition += obj
-        else:
-            self._current_definition.append(obj)
-
-        return len(self._current_definition)
+    @property
+    def compiler(self) -> Compiler:
+        return self._compiler
 
     @property
     def interactive(self) -> bool:
@@ -117,7 +131,7 @@ class _InnerInterpreter(State):
         return self._dictionary
 
     def execute(self, code: DEFINED_XT) -> None:
-        self._set_execution_context(code)  # TODO could be a context manager
+        self._set_execution_context(code)
         while not self.past_end_of_code:
             func: NATIVE_XT = self._next_exec_token()
             new_inst_ptr: POINTER | None = func(self)
@@ -214,12 +228,12 @@ class _InnerInterpreter(State):
         self.input_code = ''
         self.ds = []
         self.rs = []
-        self.control_stack = []
+        self._compiler.control_stack= []
         self._last_created_word = ''
         self.next_heap_address = heap_fence
 
         assert not self.is_compiling
-        self._current_definition = DefinedExecutionToken()
+        self._compiler = _Compiler(self)
 
 
 class Interpreter:
@@ -280,19 +294,19 @@ class Interpreter:
             if immediate:
                 execute_immediate(self._state, xt)
             elif self._state.is_compiling:  #  state entered with : and exited by ;
-                self._state.compile_to_current_definition(compile_address(word, xt))
+                self._state.compiler.compile_to_current_definition(compile_address(word, xt))
             else:
                 execute_immediate(self._state, xt)
         else:
             if self.is_literal(word):
                 action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self._state.word_to_int(word)])
                 if self._state.is_compiling:
-                    self._state.compile_to_current_definition(action)
+                    self._state.compiler.compile_to_current_definition(action)
                 else:
                     self._state.execute(action)
             else:  # defer
                 if self._state.is_compiling:
-                    self._state.compile_to_current_definition(deferred_definition(word))
+                    self._state.compiler.compile_to_current_definition(deferred_definition(word))
                 else:
                     fatal(f"Unknown word: {word!r}")
 

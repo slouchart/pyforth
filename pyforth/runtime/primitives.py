@@ -1,5 +1,5 @@
 from typing import cast, Optional
-from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT
+from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT, Compiler
 from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
 from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error, define_word, immediate_word
 
@@ -70,12 +70,14 @@ def xt_r_drop_rs(state: State) -> None:
 def xt_c_colon(state: State) -> None:
     if state.is_compiling:
         fatal(f"COLON: Already compiling a definition")
-    if state.control_stack:
-        fatal(f": inside Control stack: {state.control_stack}")
+
+    compiler: Compiler = state.compiler
+    if compiler.control_stack:
+        fatal(f": inside Control stack: {compiler.control_stack}")
     label = state.next_word()
-    state.control_stack.append(label)  # flag for following ";"
+    compiler.control_stack.append(label)  # flag for following ";"
     state.set_compile_flag()  # enter "compile" mode
-    state.prepare_current_definition()  # prepare code definition
+    compiler.prepare_current_definition()  # prepare code definition
 
 
 @define_word(";")
@@ -83,12 +85,14 @@ def xt_c_colon(state: State) -> None:
 def xt_c_semi(state: State) -> None:
     if not state.is_compiling:
         fatal("SEMICOLON: Not in compile mode")
-    if not state.control_stack:
+
+    compiler: Compiler = state.compiler
+    if not compiler.control_stack:
         fatal("No : for ; to match")
-    label = state.control_stack.pop()
+    label = compiler.control_stack.pop()
     assert isinstance(label, str)
     state.reveal_created_word(label)
-    state.complete_current_definition()
+    compiler.complete_current_definition()
     state.reset_compile_flag()
 
 
@@ -108,7 +112,7 @@ def xt_c_postpone(state: State) -> None:
     if xt is None:
         fatal(f"POSTPONE: unknown word {word!r}")
     assert xt is not None  # so mypy is happy...
-    state.compile_to_current_definition(compile_address(word, xt))
+    state.compiler.compile_to_current_definition(compile_address(word, xt))
 
 
 @define_word("immediate")
@@ -128,8 +132,9 @@ def xt_c_recurse(state: State) -> None:
     if not state.is_compiling:
         fatal("RECURSE outside definition")
 
-    current_def: WORD = cast(WORD, state.control_stack[0])
-    state.compile_to_current_definition([xt_r_run, current_def])
+    compiler: Compiler = state.compiler
+    current_def: WORD = cast(WORD, compiler.control_stack[0])
+    compiler.compile_to_current_definition([xt_r_run, current_def])
 
 
 @define_word("'")
@@ -154,16 +159,18 @@ def xt_r_execute(state: State) -> Optional[POINTER]:
 def xt_c_bracket_compile(state: State) -> None:
     if not state.is_compiling:
         fatal("[COMPILE] outside definition")
+
+    compiler: Compiler = state.compiler
     word: WORD = state.next_word()
     found, immediate, xt = search_word(state.execution_tokens, word)
     if found:
         if immediate:
-            state.compile_to_current_definition(xt)
+            compiler.compile_to_current_definition(xt)
         else:
             assert xt is not None
             def _xt(_state: State) -> None:
-                _state.compile_to_current_definition(compile_address(word, xt))
-            state.compile_to_current_definition(_xt)
+                _state.compiler.compile_to_current_definition(compile_address(word, xt))
+            compiler.compile_to_current_definition(_xt)
     else:
         raise ForthCompilationError(f"Unknown word: {word!r}")
 

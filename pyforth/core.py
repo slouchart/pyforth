@@ -37,13 +37,9 @@ class ForthRuntimeError(BaseException):
     pass
 
 
-class State(ABC):
+class Compiler(ABC):
 
-    ds: DATA_STACK = []
-    rs: RETURN_STACK = []
     control_stack: CONTROL_STACK = []
-    heap: list[LITERAL] = [0] * 20
-    next_heap_address: int = 0
 
     @abstractmethod
     def prepare_current_definition(self) -> None: ...
@@ -56,6 +52,19 @@ class State(ABC):
 
     @abstractmethod
     def complete_current_definition(self) -> None: ...
+
+
+class State(ABC):
+
+    ds: DATA_STACK = []
+    rs: RETURN_STACK = []
+
+    heap: list[LITERAL] = [0] * 20
+    next_heap_address: int = 0
+
+    @property
+    @abstractmethod
+    def compiler(self) -> Compiler: ...
 
     @property
     @abstractmethod

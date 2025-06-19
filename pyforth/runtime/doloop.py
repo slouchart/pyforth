@@ -1,4 +1,4 @@
-from pyforth.core import POINTER, State, CONTROL_STACK, XT
+from pyforth.core import POINTER, State, CONTROL_STACK, XT, Compiler
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
 from pyforth.runtime.utils import compiling_word, fatal, define_word
 
@@ -6,22 +6,23 @@ from pyforth.runtime.utils import compiling_word, fatal, define_word
 @define_word("do")
 @compiling_word
 def xt_c_do(state: State) -> None:
-    do_sys: POINTER = state.compile_to_current_definition(
+    compiler: Compiler = state.compiler
+    do_sys: POINTER = compiler.compile_to_current_definition(
         [
             stacks.xt_r_swap,
             stacks.xt_r_to_rs,  # push limit to rs
             stacks.xt_r_to_rs  # push starting index to rs
         ]
     )
-    state.control_stack.append(do_sys)  # flag for next LOOP
+    compiler.control_stack.append(do_sys)  # flag for next LOOP
 
 
 @define_word("loop")
 @compiling_word
 def xt_c_loop(state: State) -> None:
-
-    do_sys = state.control_stack.pop()
-    state.compile_to_current_definition(
+    compiler: Compiler = state.compiler
+    do_sys = compiler.control_stack.pop()
+    compiler.compile_to_current_definition(
         [
             stacks.xt_r_from_rs,  # rs> inx
             primitives.xt_r_push, 1,  # inx++
@@ -32,11 +33,6 @@ def xt_c_loop(state: State) -> None:
             stacks.xt_r_to_rs,    # rs: limit, index - ds: limit, index
             comparison.xt_r_eq,
             primitives.xt_r_jz, do_sys, # back to DO or pass
-        ]
-    )
-
-    state.compile_to_current_definition(
-        [
             stacks.xt_r_from_rs,  # UN-LOOP
             stacks.xt_r_from_rs,
             stacks.xt_r_drop,
@@ -49,7 +45,8 @@ def loop_index_factory(expected_nested_level: int) -> XT:
 
     @compiling_word
     def xt_r_loop_index(state: State) -> None:
-        state.compile_to_current_definition(
+
+        state.compiler.compile_to_current_definition(
             [
                 stacks.xt_r_from_rs,  # move around outermost do-loop params
                 stacks.xt_r_from_rs,
