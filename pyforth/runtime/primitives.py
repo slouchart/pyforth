@@ -73,7 +73,7 @@ def xt_c_colon(state: State) -> None:
     if state.control_stack:
         fatal(f": inside Control stack: {state.control_stack}")
     label = state.next_word()
-    state.control_stack.append(("COLON", label))  # flag for following ";"
+    state.control_stack.append(label)  # flag for following ";"
     state.set_compile_flag()  # enter "compile" mode
     state.prepare_current_definition()  # prepare code definition
 
@@ -85,9 +85,7 @@ def xt_c_semi(state: State) -> None:
         fatal("SEMICOLON: Not in compile mode")
     if not state.control_stack:
         fatal("No : for ; to match")
-    word, label = state.control_stack.pop()
-    if word != "COLON":
-        fatal(": not balanced with ;")
+    label = state.control_stack.pop()
     assert isinstance(label, str)
     state.reveal_created_word(label)
     state.complete_current_definition()
@@ -130,17 +128,7 @@ def xt_c_recurse(state: State) -> None:
     if not state.is_compiling:
         fatal("RECURSE outside definition")
 
-    index: int = 1
-    current_def: WORD = ''
-    while index <= len(state.control_stack):
-        colon, word, *_ = state.control_stack[-index]
-        if colon == 'COLON':
-            current_def = cast(WORD, word)
-            break
-        index += 1
-    else:
-        fatal(f"RECURSE: control stack error")
-
+    current_def: WORD = cast(WORD, state.control_stack[0])
     state.compile_to_current_definition([xt_r_run, current_def])
 
 

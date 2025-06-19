@@ -3,41 +3,24 @@ from pyforth.runtime import arithmetic, comparison, stacks, primitives
 from pyforth.runtime.utils import compiling_word, fatal, define_word
 
 
-def _current_nested_count(cs: CONTROL_STACK) -> int:
-    return len(
-        [item for item in cs if item[0] == 'DO']
-    )
-
-
 @define_word("do")
 @compiling_word
 def xt_c_do(state: State) -> None:
-    if not state.is_compiling:
-        fatal("DO: not in compile mode")
-
-    do_pos: POINTER = state.compile_to_current_definition(
+    do_sys: POINTER = state.compile_to_current_definition(
         [
             stacks.xt_r_swap,
             stacks.xt_r_to_rs,  # push limit to rs
             stacks.xt_r_to_rs  # push starting index to rs
         ]
     )
-    state.control_stack.append(("DO", do_pos))  # flag for next LOOP
+    state.control_stack.append(do_sys)  # flag for next LOOP
 
 
 @define_word("loop")
 @compiling_word
 def xt_c_loop(state: State) -> None:
 
-    if not state.is_compiling:
-        fatal("LOOP: not in compile mode")
-    if not state.control_stack:
-        fatal("No DO for LOOP to match")
-    cs_word, do_pos = state.control_stack.pop()
-    if cs_word != "DO":
-        fatal(f"LOOP preceded by {cs_word} (not DO)")
-    assert isinstance(do_pos, POINTER)
-
+    do_sys = state.control_stack.pop()
     state.compile_to_current_definition(
         [
             stacks.xt_r_from_rs,  # rs> inx
@@ -48,7 +31,7 @@ def xt_c_loop(state: State) -> None:
             stacks.xt_r_dup,      # ds: limit, index, index
             stacks.xt_r_to_rs,    # rs: limit, index - ds: limit, index
             comparison.xt_r_eq,
-            primitives.xt_r_jz, do_pos, # back to DO or pass
+            primitives.xt_r_jz, do_sys, # back to DO or pass
         ]
     )
 
@@ -64,17 +47,8 @@ def xt_c_loop(state: State) -> None:
 
 def loop_index_factory(expected_nested_level: int) -> XT:
 
-    def func(state: State) -> None:
-
-        if not state.is_compiling:
-            fatal("INDEX: not in compile mode")
-
-        nb_nested_do_loops: int = _current_nested_count(state.control_stack)
-
-        if nb_nested_do_loops < expected_nested_level:
-            fatal(f"Loop index usage: "
-                  f"Unsupported level of nested DO..LOOP {nb_nested_do_loops}")
-
+    @compiling_word
+    def xt_r_loop_index(state: State) -> None:
         state.compile_to_current_definition(
             [
                 stacks.xt_r_from_rs,  # move around outermost do-loop params
@@ -86,7 +60,8 @@ def loop_index_factory(expected_nested_level: int) -> XT:
                 stacks.xt_r_to_rs, stacks.xt_r_to_rs,  # put them back
             ] * (expected_nested_level - 1)
         )
-    return compiling_word(func)
+
+    return xt_r_loop_index
 
 
 i = define_word("i", loop_index_factory(1))
