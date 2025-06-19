@@ -55,8 +55,7 @@ def pure_stack_operation(func: Callable[[STACK], None]) -> NATIVE_XT:
     return wrapper
 
 
-def compiling_word(func: NATIVE_XT) -> NATIVE_XT:
-
+def immediate_word(func: NATIVE_XT) -> NATIVE_XT:
     @wraps(func)
     def wrapper(state: State) -> Optional[POINTER]:
         return func(state)
@@ -64,6 +63,16 @@ def compiling_word(func: NATIVE_XT) -> NATIVE_XT:
     setattr(wrapper, '_immediate', True)
 
     return wrapper
+
+def compiling_word(func: NATIVE_XT) -> NATIVE_XT:
+
+    @wraps(func)
+    def wrapper(state: State) -> Optional[POINTER]:
+        if not state.is_compiling:
+            pass
+        return func(state)
+
+    return immediate_word(wrapper)
 
 
 def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:

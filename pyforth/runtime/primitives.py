@@ -1,7 +1,7 @@
 from typing import cast, Optional
 from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT
 from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
-from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error, define_word
+from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error, define_word, immediate_word
 
 
 @define_word("create")
@@ -66,7 +66,7 @@ def xt_r_drop_rs(state: State) -> None:
 
 
 @define_word(":")
-@compiling_word
+@immediate_word
 def xt_c_colon(state: State) -> None:
     if state.is_compiling:
         fatal(f"COLON: Already compiling a definition")
