@@ -1,9 +1,10 @@
 from typing import cast, Optional
 from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT
 from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
-from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error
+from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error, define_word
 
 
+@define_word("create")
 def xt_r_create(state: State) -> None:
     label = state.next_word()
     # when created word is run, pushes its address
@@ -11,6 +12,7 @@ def xt_r_create(state: State) -> None:
     state.reveal_created_word(label)
 
 
+@define_word("does>")
 def xt_r_does(state: State) -> POINTER:
     assert isinstance(state.execution_tokens[state.last_created_word], list)
     ref_xt: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[state.last_created_word])
@@ -63,6 +65,7 @@ def xt_r_drop_rs(state: State) -> None:
     return None
 
 
+@define_word(":")
 @compiling_word
 def xt_c_colon(state: State) -> None:
     if state.is_compiling:
@@ -75,6 +78,7 @@ def xt_c_colon(state: State) -> None:
     state.prepare_current_definition()  # prepare code definition
 
 
+@define_word(";")
 @compiling_word
 def xt_c_semi(state: State) -> None:
     if not state.is_compiling:
@@ -91,6 +95,7 @@ def xt_c_semi(state: State) -> None:
     state.reset_compile_flag()
 
 
+@define_word("exit")
 @compiling_word
 def xt_c_exit(state: State) -> None:
 
@@ -111,6 +116,7 @@ def xt_c_exit(state: State) -> None:
     _exit(state)
 
 
+@define_word("postpone")
 @compiling_word
 def xt_c_postpone(state: State) -> None:
     if not state.is_compiling:
@@ -123,6 +129,7 @@ def xt_c_postpone(state: State) -> None:
     state.compile_to_current_definition(compile_address(word, xt))
 
 
+@define_word("immediate")
 def xt_r_immediate(state: State) -> None:
     if state.is_compiling:
         fatal("IMMEDIATE: In compile mode")
@@ -133,6 +140,7 @@ def xt_r_immediate(state: State) -> None:
     setattr(xt, '_immediate', True)
 
 
+@define_word("recurse")
 @compiling_word
 def xt_c_recurse(state: State) -> None:
     if not state.is_compiling:
@@ -152,6 +160,7 @@ def xt_c_recurse(state: State) -> None:
     state.compile_to_current_definition([xt_r_run, current_def])
 
 
+@define_word("'")
 def xt_r_tick(state: State):
     word: WORD = state.next_word()
     addr: POINTER | None = get_word_address(state.execution_tokens, word)
@@ -159,6 +168,7 @@ def xt_r_tick(state: State):
     state.ds.append(addr)
 
 
+@define_word("execute")
 @intercept_stack_error
 def xt_r_execute(state: State) -> Optional[POINTER]:
     xt_addr: POINTER = state.ds.pop()
@@ -167,6 +177,7 @@ def xt_r_execute(state: State) -> Optional[POINTER]:
     return execute_immediate(state, word_and_xt[1])
 
 
+@define_word("[compile]")
 @compiling_word
 def xt_c_bracket_compile(state: State) -> None:
     if not state.is_compiling:
@@ -177,6 +188,7 @@ def xt_c_bracket_compile(state: State) -> None:
         if immediate:
             state.compile_to_current_definition(xt)
         else:
+            assert xt is not None
             def _xt(_state: State) -> None:
                 _state.compile_to_current_definition(compile_address(word, xt))
             state.compile_to_current_definition(_xt)

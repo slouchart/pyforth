@@ -1,6 +1,6 @@
 from pyforth.core import POINTER, State, CONTROL_STACK, XT
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
-from pyforth.runtime.utils import compiling_word, fatal
+from pyforth.runtime.utils import compiling_word, fatal, define_word
 
 
 def _current_nested_count(cs: CONTROL_STACK) -> int:
@@ -9,6 +9,7 @@ def _current_nested_count(cs: CONTROL_STACK) -> int:
     )
 
 
+@define_word("do")
 @compiling_word
 def xt_c_do(state: State) -> None:
     if not state.is_compiling:
@@ -24,6 +25,7 @@ def xt_c_do(state: State) -> None:
     state.control_stack.append(("DO", slot, ()))  # flag for next LOOP
 
 
+@define_word("loop")
 @compiling_word
 def xt_c_loop(state: State) -> None:
 
@@ -61,7 +63,7 @@ def xt_c_loop(state: State) -> None:
     )
 
 
-def loop_index_factory(expected_nested_level: int, index_word: str) -> XT:
+def loop_index_factory(expected_nested_level: int) -> XT:
 
     def func(state: State) -> None:
 
@@ -71,7 +73,7 @@ def loop_index_factory(expected_nested_level: int, index_word: str) -> XT:
         nb_nested_do_loops: int = _current_nested_count(state.control_stack)
 
         if nb_nested_do_loops < expected_nested_level:
-            fatal(f"Loop index {index_word.upper()!r} usage: "
+            fatal(f"Loop index usage: "
                   f"Unsupported level of nested DO..LOOP {nb_nested_do_loops}")
 
         state.compile_to_current_definition(
@@ -86,3 +88,8 @@ def loop_index_factory(expected_nested_level: int, index_word: str) -> XT:
             ] * (expected_nested_level - 1)
         )
     return compiling_word(func)
+
+
+i = define_word("i", loop_index_factory(1))
+j = define_word("j", loop_index_factory(2))
+k = define_word("k", loop_index_factory(3))

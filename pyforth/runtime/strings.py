@@ -3,11 +3,12 @@ from typing import Final
 
 from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT
 from .primitives import xt_r_push
-from .utils import flush_stdout, compiling_word, fatal, intercept_stack_error
+from .utils import flush_stdout, compiling_word, fatal, intercept_stack_error, define_word
 
 QUOTE: Final[str] = r'"'
 
 
+@define_word('."')
 @compiling_word
 def xt_c_dot_quote(state: State) -> None:
     value: str = parse_string(state, until=QUOTE)
@@ -22,6 +23,7 @@ def xt_c_dot_quote(state: State) -> None:
         xt_r_dot_quote(state)
 
 
+@define_word('c"')
 @compiling_word
 def xt_c_char_quote(state: State) -> None:
     if not state.is_compiling:
@@ -47,6 +49,7 @@ def _store_string(s: str, counted: bool = False) -> NATIVE_XT:
     return _xt
 
 
+@define_word('s"')
 @compiling_word
 def xt_c_s_quote(state: State) -> None:
     value: str = parse_string(state, until=QUOTE)
@@ -57,6 +60,7 @@ def xt_c_s_quote(state: State) -> None:
         _store_string(value)(state)
 
 
+@define_word("type")
 @flush_stdout
 def xt_r_type(state: State) -> None:
     count: LITERAL = state.ds.pop()
@@ -74,11 +78,13 @@ def parse_string(state: State, until: str) -> str:
     return s
 
 
+@define_word("char")
 def xt_r_char(state: State) -> None:
     word: WORD = state.next_word(preserve_case=True)
     state.ds.append(ord(word[0]))
 
 
+@define_word("[char]")
 @compiling_word
 def xt_c_bracket_char(state: State) -> None:
     if not state.is_compiling:

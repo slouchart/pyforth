@@ -13,8 +13,6 @@ decimal
 -1 constant true
 0 constant false
 
-: dup 0 pick ;
-: over 1 pick ;
 : rot >r swap r> swap ;
 : nip swap drop ;
 : tuck swap over ;
@@ -64,5 +62,8 @@ decimal
 : c! ! ;
 
 : count ( c-addr0 -- c-addr1 u )
-dup @ swap 1+ swap  \ no need to implement in Python
+  \ no need to implement in Python
+   dup @
+   swap 1+
+   swap
 ;

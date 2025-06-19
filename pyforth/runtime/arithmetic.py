@@ -11,6 +11,7 @@ def xt_r_add(ds: STACK) -> None:
     ds.append(a + b)
 
 
+@define_word('*')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_mul(ds: STACK) -> None:
@@ -19,6 +20,7 @@ def xt_r_mul(ds: STACK) -> None:
     ds.append(a * b)
 
 
+@define_word('-')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_sub(ds: STACK) -> None:
@@ -27,6 +29,7 @@ def xt_r_sub(ds: STACK) -> None:
     ds.append(a - b)
 
 
+@define_word('/')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_div(ds: STACK) -> None:
@@ -35,6 +38,7 @@ def xt_r_div(ds: STACK) -> None:
     ds.append(a // b)
 
 
+@define_word('mod')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_mod(ds: STACK) -> None:
@@ -43,6 +47,7 @@ def xt_r_mod(ds: STACK) -> None:
     ds.append(a % b)
 
 
+@define_word('rshift')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_rshift(ds: STACK) -> None:
@@ -51,6 +56,7 @@ def xt_r_rshift(ds: STACK) -> None:
     ds.append(v >> u)
 
 
+@define_word('lshift')
 @intercept_stack_error
 @pure_stack_operation
 def xt_r_lshift(ds: STACK) -> None:

@@ -1,1 +1,1 @@
-from .core import dictionary
+from .core import load_dictionary

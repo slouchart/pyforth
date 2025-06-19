@@ -8,7 +8,7 @@ from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
     StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM
 from .core import ForthCompilationError, State
-from .runtime import dictionary
+from .runtime import load_dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
 from .runtime.fixed_point import parse_to_fp
 
@@ -41,6 +41,8 @@ class _InnerInterpreter(State):
         self._precision: int = DEFAULT_PRECISION
         self._last_created_word: WORD = ''
         self._current_definition: DefinedExecutionToken = DefinedExecutionToken()
+        self._dictionary: dict[WORD, XT] = {}
+        load_dictionary(self._dictionary)
 
     def prepare_current_definition(self) -> None:
         assert self.is_compiling
@@ -119,7 +121,7 @@ class _InnerInterpreter(State):
 
     @property
     def execution_tokens(self) -> dict[WORD, XT]:
-        return dictionary
+        return self._dictionary
 
     def execute(self, code: DEFINED_XT) -> None:
         self._set_execution_context(code)  # TODO could be a context manager
@@ -249,7 +251,7 @@ class Interpreter:
 
     @property
     def words(self) -> Sequence[WORD]:
-        return list(dictionary)
+        return list(self._state.execution_tokens)
 
     def run(self, input_code: str = '', interactive: bool = False) -> None:
 
@@ -279,7 +281,7 @@ class Interpreter:
     def interpret(self, word: WORD) -> None:
 
         # loop as in https://www.forth.org/lost-at-c.html [figure 1.]
-        found, immediate, xt = search_word(dictionary, word)
+        found, immediate, xt = search_word(self._state.execution_tokens, word)
         if found:
             assert xt is not None
             if immediate:

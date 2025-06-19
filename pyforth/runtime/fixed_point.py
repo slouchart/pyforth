@@ -3,21 +3,24 @@ import sys
 from typing import Callable
 
 from pyforth.core import State, WORD, NATIVE_XT, ForthRuntimeError
-from .utils import flush_stdout, intercept_stack_error
+from .utils import flush_stdout, intercept_stack_error, define_word
 
 
+@define_word("precision")
 def xt_r_get_precision(state: State) -> None:
     state.ds.append(state.precision)
 
 
+@define_word("set-precision")
 @intercept_stack_error
 def xt_r_set_precision(state: State) -> None:
     state.set_precision(state.ds.pop())
 
 
+@define_word("f.")
 @intercept_stack_error
 @flush_stdout
-def xt_r_dot_f(state: State) -> None:
+def xt_r_f_dot(state: State) -> None:
     value: int = state.ds.pop()
     precision: int = state.precision
     sys.stdout.write(fp_to_str(value, precision))
@@ -59,6 +62,7 @@ def parse_to_fp(word: WORD, precision: int) -> int:
         return int(round(f))
 
 
+@define_word("f*")
 @intercept_stack_error
 def xt_r_f_mul(state: State) -> None:
     b: int = state.ds.pop()
@@ -68,6 +72,7 @@ def xt_r_f_mul(state: State) -> None:
     state.ds.append(result)
 
 
+@define_word("f/")
 @intercept_stack_error
 def xt_r_f_div(state: State) -> None:
     b: int = state.ds.pop()
@@ -77,7 +82,7 @@ def xt_r_f_div(state: State) -> None:
     state.ds.append(result)
 
 
-def _math_func_factory(func: Callable[[float], float]) -> NATIVE_XT:
+def _math_func_factory(func: Callable[[float], float], word: WORD) -> NATIVE_XT:
     def wrapped(state: State) -> None:
         x: float = state.ds.pop() / 10 ** state.precision
         try:
@@ -89,9 +94,10 @@ def _math_func_factory(func: Callable[[float], float]) -> NATIVE_XT:
                 raise ForthRuntimeError(str(e)) from None
             raise
 
-    return intercept_stack_error(wrapped)
+    return define_word(word, intercept_stack_error(wrapped))
 
 
+@define_word("f**")
 @intercept_stack_error
 def xt_r_f_power(state: State) -> None:
     exponent: float = state.ds.pop() / 10 ** state.precision
@@ -101,24 +107,25 @@ def xt_r_f_power(state: State) -> None:
     state.ds.append(result)
 
 
-xt_r_f_sqrt = _math_func_factory(math.sqrt)
-xt_r_f_exp = _math_func_factory(math.exp)
-xt_r_f_ln = _math_func_factory(math.log)
-xt_r_f_log = _math_func_factory(math.log10)
-xt_r_f_sin = _math_func_factory(math.sin)
-xt_r_f_cos = _math_func_factory(math.cos)
-xt_r_f_tan = _math_func_factory(math.tan)
-xt_r_f_sinh = _math_func_factory(math.sinh)
-xt_r_f_cosh = _math_func_factory(math.cosh)
-xt_r_f_tanh = _math_func_factory(math.tanh)
-xt_r_f_asin = _math_func_factory(math.asin)
-xt_r_f_acos = _math_func_factory(math.acos)
-xt_r_f_atan = _math_func_factory(math.atan)
-xt_r_f_acosh = _math_func_factory(math.acosh)
-xt_r_f_asinh = _math_func_factory(math.asinh)
-xt_r_f_atanh = _math_func_factory(math.atanh)
+xt_r_f_sqrt = _math_func_factory(math.sqrt, "fsqrt")
+xt_r_f_exp = _math_func_factory(math.exp, "fexp")
+xt_r_f_ln = _math_func_factory(math.log, "flog")
+xt_r_f_log = _math_func_factory(math.log10, "flog10")
+xt_r_f_sin = _math_func_factory(math.sin, "fsin")
+xt_r_f_cos = _math_func_factory(math.cos, "fcos")
+xt_r_f_tan = _math_func_factory(math.tan, "ftan")
+xt_r_f_sinh = _math_func_factory(math.sinh, "fsinh")
+xt_r_f_cosh = _math_func_factory(math.cosh, "fcosh")
+xt_r_f_tanh = _math_func_factory(math.tanh, "ftanh")
+xt_r_f_asin = _math_func_factory(math.asin, "fasin")
+xt_r_f_acos = _math_func_factory(math.acos, "facos")
+xt_r_f_atan = _math_func_factory(math.atan, "fatan")
+xt_r_f_acosh = _math_func_factory(math.acosh, "facosh")
+xt_r_f_asinh = _math_func_factory(math.asinh, "fasinh")
+xt_r_f_atanh = _math_func_factory(math.atanh, "fatanh")
 
 
+@define_word("fatan2")
 @intercept_stack_error
 def xt_r_f_atan2(state: State) -> None:
     x: float = state.ds.pop() / 10 ** state.precision

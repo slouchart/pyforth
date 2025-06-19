@@ -1,14 +1,15 @@
+import re
 import sys
-from functools import wraps
+from functools import wraps, partial
 from typing import Callable, Optional, Any, cast
 
 from pyforth.core import NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
 from pyforth.core import ForthCompilationError
 
 
-def define_word(word: WORD, xt: NATIVE_XT | None = None) -> NATIVE_XT | Callable[[NATIVE_XT], NATIVE_XT]:
+def define_word(word: WORD, xt: Any | None = None) -> Any:
 
-    def decorator(f: NATIVE_XT) -> NATIVE_XT:
+    def decorator(f: Any) -> Any:
         setattr(f, '_word', word)
         return f
 
@@ -73,5 +74,6 @@ def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:
         except IndexError as err:
             if "pop from empty list" in str(err).lower():
                 raise StackUnderflowError("Stack underflow error") from None
+        return None
 
     return cast(NATIVE_XT, wrapper)

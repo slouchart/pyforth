@@ -1,9 +1,10 @@
 from pyforth.core import POINTER, State
 
 from pyforth.runtime import primitives
-from pyforth.runtime.utils import compiling_word, fatal
+from pyforth.runtime.utils import compiling_word, fatal, define_word
 
 
+@define_word("begin")
 @compiling_word
 def xt_c_begin(state: State) -> None:
     if not state.is_compiling:
@@ -12,6 +13,7 @@ def xt_c_begin(state: State) -> None:
     state.control_stack.append(("BEGIN", slot, ()))  # flag for following UNTIL/REPEAT
 
 
+@define_word("until")
 @compiling_word
 def xt_c_until(state: State) -> None:
     if not state.is_compiling:
@@ -31,6 +33,7 @@ def xt_c_until(state: State) -> None:
     state.set_exit_jump_address(exit_)
 
 
+@define_word("while")
 @compiling_word
 def xt_c_while(state: State) -> None:
     if not state.is_compiling:
@@ -41,6 +44,7 @@ def xt_c_while(state: State) -> None:
     state.compile_to_current_definition(0)  # to be filled in by REPEAT
 
 
+@define_word("repeat")
 @compiling_word
 def xt_c_repeat(state: State) -> None:
 
@@ -70,6 +74,7 @@ def xt_c_repeat(state: State) -> None:
     state.set_exit_jump_address(exit_)
 
 
+@define_word("again")
 @compiling_word
 def xt_c_again(state: State) -> None:
     if not state.is_compiling:
