@@ -4,6 +4,7 @@ from pyforth.abc import State
 from pyforth.annotations import STACK
 
 from .utils import pass_both_stacks, flush_stdout, intercept_stack_error, define_word
+from ..interpreter.utils import int_to_str
 
 
 @define_word("dump")
@@ -18,7 +19,7 @@ def xt_r_dump(ds: STACK, rs: STACK) -> None:
 @flush_stdout
 def xt_r_dot(state: State) -> None:
     value: int = state.ds.pop()
-    sys.stdout.write(state.int_to_str(value))
+    sys.stdout.write(int_to_str(value, state.base))
 
 
 @define_word("emit")

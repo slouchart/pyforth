@@ -10,7 +10,7 @@ from pyforth.abc import DefinedExecutionToken
 from pyforth.annotations import DATA_STACK, DEFINED_XT, RETURN_STACK, WORD, LITERAL
 from pyforth.exceptions import ForthCompilationError, ForthRuntimeError, StackUnderflowError
 from pyforth.runtime.primitives import xt_r_push, execute_immediate
-
+from .utils import is_literal, word_to_int
 
 DEFAULT_PRECISION: Final[int] = 5
 MEMORY_SIZE: Final[int] = 64
@@ -87,31 +87,17 @@ class Interpreter:
             else:
                 execute_immediate(self._state, xt)
         else:
-            if self.is_literal(word):
-                action: DEFINED_XT = DefinedExecutionToken([xt_r_push, self._state.word_to_int(word)])
+            if is_literal(word, base=self._state.base):
+                action: DEFINED_XT = [xt_r_push, word_to_int(word, self._state.base, self._state.precision)]
                 if self._state.is_compiling:
                     self._state.compiler.compile_to_current_definition(action)
                 else:
-                    self._state.execute(action)
+                    self._state.execute(DefinedExecutionToken(action))
             else:  # defer
                 if self._state.is_compiling:
                     self._state.compiler.compile_to_current_definition(deferred_definition(word))
                 else:
                     fatal(f"Unknown word: {word!r}")
-
-    def is_literal(self, word: str) -> bool:
-        try:
-            int(word, base=self._state.base)
-            return True
-        except ValueError as exc:
-            if 'invalid literal' in str(exc):
-                # maybe it's a decimal a.k.a. fixed point literal
-                try:
-                    float(word)
-                    return True
-                except ValueError:
-                    pass
-        return False
 
     def _bootstrap(self, extensions: Sequence[str | Path]) -> None:
         self._state.interactive = False

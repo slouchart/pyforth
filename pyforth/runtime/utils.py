@@ -101,3 +101,30 @@ def roll_any_stack(stack: list[Any], depth: int) -> None:
     while temp_stack:
         stack.append(temp_stack.pop())
     stack.append(elem)
+
+
+def parse_to_fp(word: WORD, precision: int) -> int:
+    # 1. could be an integer?
+    try:
+        int(word)
+        raise ValueError(f"{word!r} Not a decimal number representation")
+    except ValueError as exc:
+        if "Not a decimal number representation" in str(exc):
+            raise exc from None
+        # 2. try to convert into float
+        f: float = float(word)
+        apparent_precision: int = 0
+        while round(f) != f:
+            f *= 10
+            apparent_precision += 1
+
+        # 3. adjust precision
+        div_or_mul = 1 if apparent_precision < precision else -1
+        while apparent_precision != precision:
+            if div_or_mul > 0:
+                f *= 10
+            else:
+                f /= 10
+            apparent_precision += div_or_mul
+
+        return int(round(f))

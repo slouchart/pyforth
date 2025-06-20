@@ -14,7 +14,7 @@ def xt_c_do(_: State, compiler: Compiler) -> None:
             stacks.xt_r_to_rs  # push starting index to rs
         ]
     )
-    compiler.control_structure_init_open_dest()  # flag for next LOOP
+    compiler.control_structure_open_dest()  # flag for next LOOP
 
 
 @define_word("loop")
@@ -34,7 +34,7 @@ def xt_c_loop(_: State, compiler: Compiler) -> None:
             primitives.xt_r_jz,
         ]
     )
-    compiler.control_structure_close_open_dest()  # back to DO or pass
+    compiler.control_structure_close_dest()  # back to DO or pass
     compiler.compile_to_current_definition(
         [
             stacks.xt_r_from_rs,  # UN-LOOP

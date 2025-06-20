@@ -39,20 +39,20 @@ class _Compiler(Compiler):
 
         return len(self._current_definition)
 
-    def control_structure_init_open_dest(self) -> None:
+    def control_structure_open_dest(self) -> None:
         """pushes a dest pointer onto the CS, pointer to be later used by a closing word to jump back
            like in a DO...LOOP construct
         """
         self._control_stack.append(len(self._current_definition))
 
-    def control_structure_init_open_orig(self) -> None:
+    def control_structure_open_orig(self) -> None:
         self._control_stack.append(len(self._current_definition))  # flag for following CS word
         self.compile_to_current_definition(0)  # slot to be filled in
 
-    def control_structure_close_open_dest(self) -> None:
+    def control_structure_close_dest(self) -> None:
         self.compile_to_current_definition(self._control_stack.pop())
 
-    def control_struct_close_open_orig(self) -> None:
+    def control_struct_close_orig(self) -> None:
         addr: POINTER = cast(POINTER, self._control_stack.pop())
         self._current_definition[addr] = len(self._current_definition)
 

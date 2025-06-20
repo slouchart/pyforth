@@ -3,12 +3,11 @@ from __future__ import annotations
 import re
 from typing import cast, Generator, Final
 
-from pyforth.abc import Compiler, State
+from pyforth.abc import Compiler, State, DefinedExecutionToken
 from pyforth.annotations import DEFINED_XT, NATIVE_XT, POINTER, WORD, XT, XT_ATOM
 
-from pyforth.exceptions import ForthCompilationError, ForthRuntimeError
+from pyforth.exceptions import ForthRuntimeError
 from pyforth.runtime import load_dictionary
-from pyforth.runtime.fixed_point import parse_to_fp
 
 from ._compiler import _Compiler
 
@@ -91,7 +90,7 @@ class _InnerInterpreter(State):
     def execution_tokens(self) -> dict[WORD, XT]:
         return self._dictionary
 
-    def execute(self, code: DEFINED_XT) -> None:
+    def execute(self, code: DefinedExecutionToken[XT_ATOM]) -> None:
         self._set_execution_context(code)
         while not self.past_end_of_code:
             func: NATIVE_XT = self._next_exec_token()
@@ -112,26 +111,6 @@ class _InnerInterpreter(State):
         if u_val < 0:
             raise ForthRuntimeError("Precision mist be a positive integer")
         self._precision = u_val
-
-    def int_to_str(self, value: int) -> str:
-        match self.base:
-            case 10:
-                return str(value)
-            case 16:
-                return hex(value)[2:].upper()
-            case 2:
-                return bin(value)[2:].upper()
-            case _:
-                raise ValueError(f"Unsupported numeric basis: {self.base!r}")
-
-    def word_to_int(self, word: WORD) -> int:
-        try:
-            return parse_to_fp(word, precision=self.precision)
-        except ValueError:
-            try:
-                return int(word, base=self.base)
-            except ValueError:
-                raise ForthCompilationError(f"Cannot parse {word!r} as a literal") from None
 
     def set_compile_flag(self) -> None:
         assert not self.is_compiling
