@@ -20,7 +20,7 @@ def xt_c_else(_: State, compiler: Compiler) -> None:
     # as 1 CS-ROLL
     compiler.control_stack_roll(1)  # swap CS TOS & NOS
 
-    # as POSTPONE THEN
+    # as THEN
     compiler.control_struct_close_open_orig() # close JZ for IF
 
 

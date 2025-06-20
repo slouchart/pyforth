@@ -87,3 +87,14 @@ def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:
         return None
 
     return cast(NATIVE_XT, wrapper)
+
+
+def roll_any_stack(stack: list[Any], depth: int) -> None:
+    assert depth >= 0
+    temp_stack: STACK = []
+    for inx in range(depth):
+        temp_stack.append(stack.pop())
+    elem = stack.pop()
+    while temp_stack:
+        stack.append(temp_stack.pop())
+    stack.append(elem)

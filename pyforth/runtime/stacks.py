@@ -1,5 +1,5 @@
 from pyforth.core import STACK, LITERAL
-from .utils import pass_both_stacks, pure_stack_operation, intercept_stack_error, define_word
+from .utils import pass_both_stacks, pure_stack_operation, intercept_stack_error, define_word, roll_any_stack
 
 
 @define_word("depth")
@@ -78,3 +78,11 @@ def xt_r_pick(ds: STACK) -> None:
     index: LITERAL = ds.pop()
     value = ds[-(1+index)]
     ds.append(value)
+
+
+@define_word('roll')
+@intercept_stack_error
+@pure_stack_operation
+def xt_r_roll(ds: STACK) -> None:
+    depth: int = ds.pop()
+    roll_any_stack(ds, depth)

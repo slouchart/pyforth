@@ -20,7 +20,7 @@ def xt_c_until(_: State, compiler: Compiler) -> None:
 @define_word("while")
 @compiling_word
 def xt_c_while(_: State, compiler: Compiler) -> None:
-    # as POSTPONE IF
+    # as IF
     compiler.compile_to_current_definition(primitives.xt_r_jz)
     compiler.control_structure_init_open_orig()
 
@@ -32,11 +32,11 @@ def xt_c_while(_: State, compiler: Compiler) -> None:
 @compiling_word
 def xt_c_repeat(_: State, compiler: Compiler) -> None:
 
-    # as POSTPONE AGAIN
+    # as AGAIN
     compiler.compile_to_current_definition(primitives.xt_r_jmp)
     compiler.control_structure_close_open_dest()
 
-    # as a new word TBD
+    # as THEN
     compiler.control_struct_close_open_orig()  # close JNZ for WHILE
 
 

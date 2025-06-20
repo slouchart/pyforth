@@ -125,3 +125,15 @@ def test_base(interpreter, program, res, capsys):
     interpreter.run(program)
     captured = capsys.readouterr()
     assert captured.out == res
+
+
+@pytest.mark.parametrize(
+    'program, res', [
+        ('1 0 roll', [1]),  # no change
+        ('1 2 1 roll', [2, 1]),  # eqv to SWAP
+        ('1 2 3 2 ROLL', [2, 3, 1]),  # eqv to ROT
+    ]
+)
+def test_roll_data_stack(interpreter, program, res):
+    interpreter.run(program)
+    assert interpreter.data_stack == res

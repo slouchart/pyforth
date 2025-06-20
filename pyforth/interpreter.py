@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import cast, Sequence, Generator, Final
 
 from .runtime.primitives import compile_address, deferred_definition, search_word
-from .runtime.utils import fatal
+from .runtime.utils import fatal, roll_any_stack
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
     StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler, STACK
 from .core import ForthCompilationError, State
@@ -69,13 +69,7 @@ class _Compiler(Compiler):
         self._current_definition[addr] = len(self._current_definition)
 
     def control_stack_roll(self, depth: int) -> None:
-        stack: CONTROL_STACK = []
-        for inx in range(depth):
-            stack.append(self._control_stack.pop())
-        elem = self._control_stack.pop()
-        while stack:
-            self._control_stack.append(stack.pop())
-        self._control_stack.append(elem)
+        roll_any_stack(self._control_stack, depth)
 
     def complete_current_definition(self) -> None:
         interpreter = self._interpreter
