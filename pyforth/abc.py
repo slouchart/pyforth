@@ -1,38 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
-from typing import TypeAlias, Optional, TypeVar, Generic, Any
-
+from typing import Optional, TypeVar, Generic, Any
+from .annotations import DATA_STACK, LITERAL, POINTER, RETURN_STACK, WORD, XT, XT_ATOM, DEFINED_XT
 T = TypeVar('T')
 
 class DefinedExecutionToken(list, Generic[T]):
     """Needed to set an _immediate attribute to True/False"""
     pass
 
-
-WORD: TypeAlias = str
-POINTER: TypeAlias = int
-STACK: TypeAlias = list
-LITERAL: TypeAlias = int
-DATA_STACK = STACK[LITERAL]
-RETURN_STACK = STACK[LITERAL]
-NATIVE_XT = Callable[["State"], Optional[POINTER]]
-XT_ATOM = NATIVE_XT | LITERAL | WORD
-DEFINED_XT: TypeAlias = DefinedExecutionToken[XT_ATOM]
-XT = NATIVE_XT | DEFINED_XT
-
-
-class ForthCompilationError(BaseException):
-    pass
-
-
-class StackUnderflowError(BaseException):
-    pass
-
-
-class ForthRuntimeError(BaseException):
-    pass
 
 
 class Compiler(ABC):

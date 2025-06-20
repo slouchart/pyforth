@@ -1,6 +1,7 @@
 from typing import cast, Optional
-from pyforth.abc import DEFINED_XT, LITERAL, POINTER, WORD, XT, Compiler
-from pyforth.abc import DefinedExecutionToken, ForthCompilationError, State
+from pyforth.annotations import DEFINED_XT, LITERAL, POINTER, WORD, XT
+from pyforth.abc import Compiler, DefinedExecutionToken, State
+from pyforth.exceptions import ForthCompilationError
 from pyforth.runtime.utils import compile_only, fatal, intercept_stack_error, define_word, immediate_word
 
 
@@ -49,7 +50,7 @@ def xt_r_run(state: State) -> POINTER:
     word: WORD = cast(WORD, state.current_execution_token)
     try:
         xt_r: DEFINED_XT = cast(DEFINED_XT, state.execution_tokens[word])
-        state.execute(xt_r)
+        state.execute(DefinedExecutionToken(xt_r))
         return p + 1
     except KeyError:
         raise ForthCompilationError(f"Undefined word {word!r}") from None
@@ -169,7 +170,7 @@ def xt_c_bracket_compile(state: State, compiler: Compiler) -> None:
 
 def execute_immediate(state: State, func: XT) -> Optional[POINTER]:
     if isinstance(func, list):
-        return state.execute(cast(DEFINED_XT, func))
+        return state.execute(DefinedExecutionToken(func))
     else:
         assert callable(func)
         return func(state)

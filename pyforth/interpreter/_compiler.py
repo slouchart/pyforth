@@ -1,7 +1,7 @@
 from typing import cast
 
 from pyforth.abc import Compiler, DefinedExecutionToken, State
-from pyforth.abc import DEFINED_XT, POINTER, STACK, WORD, XT_ATOM
+from pyforth.annotations import DEFINED_XT, POINTER, STACK, WORD, XT_ATOM
 
 from pyforth.runtime.utils import roll_any_stack
 

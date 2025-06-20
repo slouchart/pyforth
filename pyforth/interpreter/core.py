@@ -5,9 +5,10 @@ from typing import Sequence, Final
 
 from pyforth.runtime.primitives import compile_address, deferred_definition, search_word
 from pyforth.runtime.utils import fatal
-from pyforth.abc import DATA_STACK, DEFINED_XT, RETURN_STACK, WORD, DefinedExecutionToken, \
-    StackUnderflowError, LITERAL, ForthRuntimeError
-from pyforth.abc import ForthCompilationError
+
+from pyforth.abc import DefinedExecutionToken
+from pyforth.annotations import DATA_STACK, DEFINED_XT, RETURN_STACK, WORD, LITERAL
+from pyforth.exceptions import ForthCompilationError, ForthRuntimeError, StackUnderflowError
 from pyforth.runtime.primitives import xt_r_push, execute_immediate
 
 

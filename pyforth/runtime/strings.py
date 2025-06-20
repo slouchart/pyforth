@@ -1,9 +1,10 @@
 import sys
 from typing import Final
 
-from pyforth.abc import State, LITERAL, POINTER, WORD, NATIVE_XT, Compiler
+from pyforth.abc import State, Compiler
+from pyforth.annotations import LITERAL, POINTER, WORD, NATIVE_XT
 from .primitives import xt_r_push
-from .utils import flush_stdout, compile_only, fatal, define_word, immediate_word
+from .utils import flush_stdout, compile_only, define_word, immediate_word
 
 QUOTE: Final[str] = r'"'
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import cast, Generator, Final, TYPE_CHECKING
+from typing import cast, Generator, Final
 
-from pyforth.abc import DEFINED_XT, NATIVE_XT, POINTER, WORD, XT, ForthRuntimeError, XT_ATOM
-from pyforth.abc import Compiler, ForthCompilationError, State
+from pyforth.abc import Compiler, State
+from pyforth.annotations import DEFINED_XT, NATIVE_XT, POINTER, WORD, XT, XT_ATOM
+
+from pyforth.exceptions import ForthCompilationError, ForthRuntimeError
 from pyforth.runtime import load_dictionary
 from pyforth.runtime.fixed_point import parse_to_fp
 

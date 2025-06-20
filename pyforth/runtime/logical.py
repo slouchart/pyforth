@@ -1,6 +1,6 @@
 import operator
 
-from pyforth.abc import STACK
+from pyforth.annotations import STACK
 from .utils import pure_stack_operation, define_word, intercept_stack_error
 
 
