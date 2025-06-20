@@ -1,6 +1,6 @@
-from pyforth.core import POINTER, State, CONTROL_STACK, XT, Compiler
+from pyforth.core import State, XT, Compiler
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
-from pyforth.runtime.utils import compiling_word, fatal, define_word
+from pyforth.runtime.utils import compiling_word, define_word
 
 
 @define_word("do")

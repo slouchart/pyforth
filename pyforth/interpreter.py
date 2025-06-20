@@ -6,12 +6,14 @@ from typing import cast, Sequence, Generator, Final
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
-    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler, CONTROL_STACK
+    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler, STACK
 from .core import ForthCompilationError, State
 from .runtime import load_dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
 from .runtime.fixed_point import parse_to_fp
 
+CONTROL_STRUCT = POINTER | WORD
+CONTROL_STACK = STACK[CONTROL_STRUCT]
 
 DEFAULT_PRECISION: Final[int] = 5
 MEMORY_SIZE: Final[int] = 64
