@@ -6,7 +6,7 @@ from typing import cast, Sequence, Generator, Final
 from .runtime.primitives import compile_address, deferred_definition, search_word
 from .runtime.utils import fatal
 from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
-    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler
+    StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler, CONTROL_STACK
 from .core import ForthCompilationError, State
 from .runtime import load_dictionary
 from .runtime.primitives import xt_r_push, execute_immediate
@@ -55,8 +55,18 @@ class _Compiler(Compiler):
     def control_structure_close_open_dest(self) -> None:
         self.compile_to_current_definition(self.control_stack.pop())
 
-    def control_struct_close_open_orig(self, addr: POINTER) -> None:
+    def control_struct_close_open_orig(self) -> None:
+        addr: POINTER = cast(POINTER, self.control_stack.pop())
         self._current_definition[addr] = len(self._current_definition)
+
+    def control_stack_roll(self, depth: int) -> None:
+        stack: CONTROL_STACK = []
+        for inx in range(depth):
+            stack.append(self.control_stack.pop())
+        elem = self.control_stack.pop()
+        while stack:
+            self.control_stack.append(stack.pop())
+        self.control_stack.append(elem)
 
     def complete_current_definition(self) -> None:
         interpreter = self._interpreter

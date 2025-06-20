@@ -39,23 +39,17 @@ def xt_c_while(_: State, compiler: Compiler) -> None:
 @compiling_word
 def xt_c_repeat(_: State, compiler: Compiler) -> None:
     dest: POINTER = cast(POINTER, compiler.control_stack.pop())
-    orig: POINTER = cast(POINTER, compiler.control_stack.pop())
     compiler.compile_to_current_definition(
         [
             primitives.xt_r_jmp,
             dest
         ]
     )
-    compiler.control_struct_close_open_orig(orig)  # close JNZ for WHILE
+    compiler.control_struct_close_open_orig()  # close JNZ for WHILE
 
 
 @define_word("again")
 @compiling_word
 def xt_c_again(_: State, compiler: Compiler) -> None:
-    dest = compiler.control_stack.pop()
-    compiler.compile_to_current_definition(
-        [
-            primitives.xt_r_jmp,
-            dest
-        ]
-    )
+    compiler.compile_to_current_definition(primitives.xt_r_jmp)
+    compiler.control_structure_close_open_dest()
