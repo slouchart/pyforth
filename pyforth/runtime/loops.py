@@ -46,7 +46,7 @@ def xt_c_repeat(_: State, compiler: Compiler) -> None:
             dest
         ]
     )
-    compiler.close_jump_address(orig)  # close JNZ for WHILE
+    compiler.control_struct_close_open_orig(orig)  # close JNZ for WHILE
 
 
 @define_word("again")

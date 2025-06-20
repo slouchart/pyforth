@@ -6,20 +6,19 @@ from pyforth.runtime.utils import compiling_word, fatal, define_word
 @define_word("do")
 @compiling_word
 def xt_c_do(_: State, compiler: Compiler) -> None:
-    do_sys: POINTER = compiler.compile_to_current_definition(
+    compiler.compile_to_current_definition(
         [
             stacks.xt_r_swap,
             stacks.xt_r_to_rs,  # push limit to rs
             stacks.xt_r_to_rs  # push starting index to rs
         ]
     )
-    compiler.control_stack.append(do_sys)  # flag for next LOOP
+    compiler.control_structure_init_open_dest()  # flag for next LOOP
 
 
 @define_word("loop")
 @compiling_word
 def xt_c_loop(_: State, compiler: Compiler) -> None:
-    do_sys = compiler.control_stack.pop()
     compiler.compile_to_current_definition(
         [
             stacks.xt_r_from_rs,  # rs> inx
@@ -30,7 +29,12 @@ def xt_c_loop(_: State, compiler: Compiler) -> None:
             stacks.xt_r_dup,      # ds: limit, index, index
             stacks.xt_r_to_rs,    # rs: limit, index - ds: limit, index
             comparison.xt_r_eq,
-            primitives.xt_r_jz, do_sys, # back to DO or pass
+            primitives.xt_r_jz,
+        ]
+    )
+    compiler.control_structure_close_open_dest()  # back to DO or pass
+    compiler.compile_to_current_definition(
+        [
             stacks.xt_r_from_rs,  # UN-LOOP
             stacks.xt_r_from_rs,
             stacks.xt_r_drop,
