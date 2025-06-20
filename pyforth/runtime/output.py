@@ -1,6 +1,6 @@
 import sys
 
-from pyforth.core import STACK, State
+from pyforth.abc import STACK, State
 
 from .utils import pass_both_stacks, flush_stdout, intercept_stack_error, define_word
 

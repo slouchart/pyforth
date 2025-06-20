@@ -2,7 +2,7 @@ import importlib
 import inspect
 from typing import Final, Sequence
 
-from pyforth.core import WORD, XT
+from pyforth.abc import WORD, XT
 
 
 MODULES: Final[Sequence[str]] = (

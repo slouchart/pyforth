@@ -1,4 +1,4 @@
-from pyforth.core import State, Compiler
+from pyforth.abc import State, Compiler
 from pyforth.runtime import primitives
 from pyforth.runtime.utils import compile_only, define_word, immediate_word
 

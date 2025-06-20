@@ -1,6 +1,6 @@
 from typing import Final
 
-from pyforth.core import State
+from pyforth.abc import State
 from .strings import parse_string
 from .utils import immediate_word, define_word
 

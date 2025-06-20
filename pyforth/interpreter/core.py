@@ -3,22 +3,22 @@ import re
 from pathlib import Path
 from typing import cast, Sequence, Generator, Final
 
-from .runtime.primitives import compile_address, deferred_definition, search_word
-from .runtime.utils import fatal, roll_any_stack
-from .core import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
+from pyforth.runtime.primitives import compile_address, deferred_definition, search_word
+from pyforth.runtime.utils import fatal, roll_any_stack
+from pyforth.abc import DATA_STACK, DEFINED_XT, NATIVE_XT, POINTER, RETURN_STACK, WORD, XT, DefinedExecutionToken, \
     StackUnderflowError, LITERAL, ForthRuntimeError, XT_ATOM, Compiler, STACK
-from .core import ForthCompilationError, State
-from .runtime import load_dictionary
-from .runtime.primitives import xt_r_push, execute_immediate
-from .runtime.fixed_point import parse_to_fp
+from pyforth.abc import ForthCompilationError, State
+from pyforth.runtime import load_dictionary
+from pyforth.runtime.primitives import xt_r_push, execute_immediate
+from pyforth.runtime.fixed_point import parse_to_fp
 
 CONTROL_STRUCT = POINTER | WORD
 CONTROL_STACK = STACK[CONTROL_STRUCT]
 
 DEFAULT_PRECISION: Final[int] = 5
 MEMORY_SIZE: Final[int] = 64
-EXTENSIONS: Sequence[str] = (
-    'core.forth',
+EXTENSIONS: Sequence[str | Path] = (
+    Path(__file__).parent / 'core.forth',
 )
 
 
@@ -354,7 +354,7 @@ class Interpreter:
     def _bootstrap(self, extensions: Sequence[str]) -> None:
         self._state.interactive = False
         for extension in extensions:
-            extension_path = Path(__file__).parent / extension
+            extension_path =  Path(extension)
             with extension_path.open(mode='r') as stream:
                 code: str = ' \n'.join(stream.readlines())
                 self.run(input_code=code)

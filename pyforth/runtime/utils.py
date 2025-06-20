@@ -2,8 +2,8 @@ import sys
 from functools import wraps
 from typing import Callable, Optional, Any, cast
 
-from pyforth.core import NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
-from pyforth.core import ForthCompilationError
+from pyforth.abc import NATIVE_XT, POINTER, STACK, State, WORD, StackUnderflowError
+from pyforth.abc import ForthCompilationError
 
 
 # TODO precise annotations needed here

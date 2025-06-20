@@ -1,6 +1,6 @@
 from typing import cast, Optional
-from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT, Compiler
-from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
+from pyforth.abc import DEFINED_XT, LITERAL, POINTER, WORD, XT, Compiler
+from pyforth.abc import DefinedExecutionToken, ForthCompilationError, State
 from pyforth.runtime.utils import compile_only, fatal, intercept_stack_error, define_word, immediate_word
 
 

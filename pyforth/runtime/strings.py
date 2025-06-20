@@ -1,7 +1,7 @@
 import sys
 from typing import Final
 
-from pyforth.core import State, LITERAL, POINTER, WORD, NATIVE_XT, Compiler
+from pyforth.abc import State, LITERAL, POINTER, WORD, NATIVE_XT, Compiler
 from .primitives import xt_r_push
 from .utils import flush_stdout, compile_only, fatal, define_word, immediate_word
 

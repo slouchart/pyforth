@@ -69,7 +69,6 @@ class State(ABC):
 
     ds: DATA_STACK = []
     rs: RETURN_STACK = []
-
     heap: list[LITERAL] = [0] * 20
     next_heap_address: int = 0
 

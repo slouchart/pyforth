@@ -1,4 +1,4 @@
-from pyforth.core import State
+from pyforth.abc import State
 from pyforth.runtime.utils import intercept_stack_error, define_word
 
 

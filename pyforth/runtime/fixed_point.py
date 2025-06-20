@@ -2,7 +2,7 @@ import math
 import sys
 from typing import Callable
 
-from pyforth.core import State, WORD, NATIVE_XT, ForthRuntimeError
+from pyforth.abc import State, WORD, NATIVE_XT, ForthRuntimeError
 from .utils import flush_stdout, intercept_stack_error, define_word
 
 

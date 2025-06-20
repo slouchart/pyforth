@@ -1,4 +1,4 @@
-from pyforth.core import STACK
+from pyforth.abc import STACK
 from .utils import bool2forth, pure_stack_operation, define_word, intercept_stack_error
 
 

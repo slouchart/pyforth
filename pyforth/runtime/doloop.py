@@ -1,4 +1,4 @@
-from pyforth.core import State, XT, Compiler, DefinedExecutionToken
+from pyforth.abc import State, XT, Compiler, DefinedExecutionToken
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
 from pyforth.runtime.utils import compile_only, define_word, immediate_word
 
