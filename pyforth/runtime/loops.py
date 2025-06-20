@@ -1,24 +1,27 @@
 from pyforth.core import State, Compiler
 
 from pyforth.runtime import primitives
-from pyforth.runtime.utils import compiling_word, define_word
+from pyforth.runtime.utils import compile_only, define_word, immediate_word
 
 
 @define_word("begin")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_begin(_: State, compiler: Compiler) -> None:
     compiler.control_structure_init_open_dest()
 
 
 @define_word("until")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_until(_: State, compiler: Compiler) -> None:
     compiler.compile_to_current_definition(primitives.xt_r_jz)
     compiler.control_structure_close_open_dest()
 
 
 @define_word("while")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_while(_: State, compiler: Compiler) -> None:
     # as IF
     compiler.compile_to_current_definition(primitives.xt_r_jz)
@@ -29,7 +32,8 @@ def xt_c_while(_: State, compiler: Compiler) -> None:
 
 
 @define_word("repeat")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_repeat(_: State, compiler: Compiler) -> None:
 
     # as AGAIN
@@ -41,7 +45,8 @@ def xt_c_repeat(_: State, compiler: Compiler) -> None:
 
 
 @define_word("again")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_again(_: State, compiler: Compiler) -> None:
     compiler.compile_to_current_definition(primitives.xt_r_jmp)
     compiler.control_structure_close_open_dest()

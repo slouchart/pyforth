@@ -1,7 +1,7 @@
 from typing import cast, Optional
 from pyforth.core import DEFINED_XT, LITERAL, POINTER, WORD, XT, Compiler
 from pyforth.core import DefinedExecutionToken, ForthCompilationError, State
-from pyforth.runtime.utils import compiling_word, fatal, intercept_stack_error, define_word, immediate_word
+from pyforth.runtime.utils import compile_only, fatal, intercept_stack_error, define_word, immediate_word
 
 
 @define_word("create")
@@ -76,11 +76,9 @@ def xt_c_colon(state: State) -> None:
 
 
 @define_word(";")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_semi(state: State, compiler: Compiler) -> None:
-    if not state.is_compiling:
-        fatal("SEMICOLON: Not in compile mode")
-
     compiler.complete_current_definition()
     state.reset_compile_flag()
 
@@ -92,7 +90,8 @@ def xt_r_exit(state: State) -> POINTER:
 
 
 @define_word("postpone")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_postpone(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("POSTPONE: Not in compile mode")
@@ -116,7 +115,8 @@ def xt_r_immediate(state: State) -> None:
 
 
 @define_word("recurse")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_recurse(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("RECURSE outside definition")
@@ -147,7 +147,8 @@ def xt_r_execute(state: State) -> Optional[POINTER]:
 
 
 @define_word("[compile]")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_bracket_compile(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("[COMPILE] outside definition")

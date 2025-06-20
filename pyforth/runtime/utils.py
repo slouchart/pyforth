@@ -64,15 +64,17 @@ def immediate_word(func: NATIVE_XT) -> NATIVE_XT:
 
     return wrapper
 
-def compiling_word(func) -> NATIVE_XT:
+def compile_only(func) -> NATIVE_XT:
 
     @wraps(func)
     def wrapper(state: State) -> Optional[POINTER]:
         if not state.is_compiling:
-            fatal(f"Outside compilation context")
+            name: WORD = getattr(func, '_word', '')
+            prefix: str = f'{name.upper()}: ' if name else ''
+            fatal(prefix + f"compile-only word outside compilation context")
         return func(state, state.compiler)
 
-    return immediate_word(wrapper)
+    return wrapper
 
 
 def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:
@@ -91,7 +93,7 @@ def intercept_stack_error(func: NATIVE_XT) -> NATIVE_XT:
 
 def roll_any_stack(stack: list[Any], depth: int) -> None:
     assert depth >= 0
-    temp_stack: STACK = []
+    temp_stack = []
     for inx in range(depth):
         temp_stack.append(stack.pop())
     elem = stack.pop()

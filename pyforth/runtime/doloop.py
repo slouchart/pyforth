@@ -1,10 +1,11 @@
-from pyforth.core import State, XT, Compiler
+from pyforth.core import State, XT, Compiler, DefinedExecutionToken
 from pyforth.runtime import arithmetic, comparison, stacks, primitives
-from pyforth.runtime.utils import compiling_word, define_word
+from pyforth.runtime.utils import compile_only, define_word, immediate_word
 
 
 @define_word("do")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_do(_: State, compiler: Compiler) -> None:
     compiler.compile_to_current_definition(
         [
@@ -17,7 +18,8 @@ def xt_c_do(_: State, compiler: Compiler) -> None:
 
 
 @define_word("loop")
-@compiling_word
+@immediate_word
+@compile_only
 def xt_c_loop(_: State, compiler: Compiler) -> None:
     compiler.compile_to_current_definition(
         [
@@ -45,20 +47,16 @@ def xt_c_loop(_: State, compiler: Compiler) -> None:
 
 def loop_index_factory(expected_nested_level: int) -> XT:
 
-    @compiling_word
-    def xt_r_loop_index(_: State, compiler: Compiler) -> None:
-
-        compiler.compile_to_current_definition(
-            [
-                stacks.xt_r_from_rs,  # move around outermost do-loop params
-                stacks.xt_r_from_rs,
-            ] * (expected_nested_level - 1)
-            + [stacks.xt_r_rs_at]    # reaching the one we need
-            + [
-                stacks.xt_r_rot, stacks.xt_r_rot,  # rearrange order
-                stacks.xt_r_to_rs, stacks.xt_r_to_rs,  # put them back
-            ] * (expected_nested_level - 1)
-        )
+    def xt_r_loop_index(state: State) -> None:
+        for _ in range(expected_nested_level-1):  # move around outermost do-loop params
+            stacks.xt_r_from_rs(state)
+            stacks.xt_r_from_rs(state)
+        stacks.xt_r_rs_at(state)    # reaching the one we need
+        for _ in range(expected_nested_level-1):
+            stacks.xt_r_rot(state)
+            stacks.xt_r_rot(state)  # rearrange order
+            stacks.xt_r_to_rs(state)
+            stacks.xt_r_to_rs(state)  # put them back
 
     return xt_r_loop_index
 
