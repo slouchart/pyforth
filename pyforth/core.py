@@ -39,10 +39,11 @@ class ForthRuntimeError(BaseException):
 
 class Compiler(ABC):
 
-    control_stack: CONTROL_STACK = []
+    @abstractmethod
+    def prepare_current_definition(self, word: WORD) -> None: ...
 
     @abstractmethod
-    def prepare_current_definition(self) -> None: ...
+    def get_current_definition_as_word(self) -> WORD: ...
 
     @abstractmethod
     def compile_to_current_definition(self, obj: Optional[Any] = None) -> POINTER: ...

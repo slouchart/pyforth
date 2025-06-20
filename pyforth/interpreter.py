@@ -24,12 +24,19 @@ class _Compiler(Compiler):
 
     def __init__(self, state: State):
         self._interpreter: State = state
+        self._control_stack: CONTROL_STACK = []
         self._current_definition: DefinedExecutionToken[XT_ATOM] = DefinedExecutionToken()
 
-    def prepare_current_definition(self) -> None:
+    def prepare_current_definition(self, word: WORD) -> None:
         assert self._interpreter.is_compiling
         assert not self._current_definition
         self._current_definition = DefinedExecutionToken()
+        self._control_stack.append(word)
+
+    def get_current_definition_as_word(self) -> WORD:
+        word: WORD = cast(WORD, self._control_stack[0])
+        assert isinstance(word, str)
+        return word
 
     def compile_to_current_definition(self, obj = None) -> POINTER:
         if obj is None:
@@ -46,31 +53,33 @@ class _Compiler(Compiler):
         """pushes a dest pointer onto the CS, pointer to be later used by a closing word to jump back
            like in a DO...LOOP construct
         """
-        self.control_stack.append(len(self._current_definition))
+        self._control_stack.append(len(self._current_definition))
 
     def control_structure_init_open_orig(self) -> None:
-        self.control_stack.append(len(self._current_definition))  # flag for following CS word
+        self._control_stack.append(len(self._current_definition))  # flag for following CS word
         self.compile_to_current_definition(0)  # slot to be filled in
 
     def control_structure_close_open_dest(self) -> None:
-        self.compile_to_current_definition(self.control_stack.pop())
+        self.compile_to_current_definition(self._control_stack.pop())
 
     def control_struct_close_open_orig(self) -> None:
-        addr: POINTER = cast(POINTER, self.control_stack.pop())
+        addr: POINTER = cast(POINTER, self._control_stack.pop())
         self._current_definition[addr] = len(self._current_definition)
 
     def control_stack_roll(self, depth: int) -> None:
         stack: CONTROL_STACK = []
         for inx in range(depth):
-            stack.append(self.control_stack.pop())
-        elem = self.control_stack.pop()
+            stack.append(self._control_stack.pop())
+        elem = self._control_stack.pop()
         while stack:
-            self.control_stack.append(stack.pop())
-        self.control_stack.append(elem)
+            self._control_stack.append(stack.pop())
+        self._control_stack.append(elem)
 
     def complete_current_definition(self) -> None:
         interpreter = self._interpreter
+        word: WORD = cast(WORD, self._control_stack.pop())
         new_xt: DefinedExecutionToken[XT_ATOM] = DefinedExecutionToken(self._current_definition[:])
+        interpreter.reveal_created_word(word)
         interpreter.execution_tokens[interpreter.last_created_word] = cast(DEFINED_XT, new_xt)
         self._current_definition.clear()
 
@@ -251,7 +260,6 @@ class _InnerInterpreter(State):
         self.input_code = ''
         self.ds = []
         self.rs = []
-        self._compiler.control_stack= []
         self._last_created_word = ''
         self.next_heap_address = heap_fence
 

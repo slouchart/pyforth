@@ -71,13 +71,8 @@ def xt_c_colon(state: State) -> None:
     if state.is_compiling:
         fatal(f"COLON: Already compiling a definition")
 
-    compiler: Compiler = state.compiler
-    if compiler.control_stack:
-        fatal(f": inside Control stack: {compiler.control_stack}")
-    label = state.next_word()
-    compiler.control_stack.append(label)  # flag for following ";"
     state.set_compile_flag()  # enter "compile" mode
-    compiler.prepare_current_definition()  # prepare code definition
+    state.compiler.prepare_current_definition(state.next_word())  # prepare code definition
 
 
 @define_word(";")
@@ -86,11 +81,6 @@ def xt_c_semi(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("SEMICOLON: Not in compile mode")
 
-    if not compiler.control_stack:
-        fatal("No : for ; to match")
-    label = compiler.control_stack.pop()
-    assert isinstance(label, str)
-    state.reveal_created_word(label)
     compiler.complete_current_definition()
     state.reset_compile_flag()
 
@@ -131,8 +121,12 @@ def xt_c_recurse(state: State, compiler: Compiler) -> None:
     if not state.is_compiling:
         fatal("RECURSE outside definition")
 
-    current_def: WORD = cast(WORD, compiler.control_stack[0])
-    compiler.compile_to_current_definition([xt_r_run, current_def])
+    compiler.compile_to_current_definition(
+        [
+            xt_r_run,
+            compiler.get_current_definition_as_word()
+        ]
+    )
 
 
 @define_word("'")
