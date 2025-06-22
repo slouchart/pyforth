@@ -41,8 +41,46 @@ decimal
 : stack? depth 0<> ;
 : ?dup dup 0<> if dup then ;
 
+: if
+  postpone cs-open-orig-if
+; immediate
+
+: then
+  postpone cs-close-orig
+; immediate
+
+: else
+  postpone cs-open-orig-always
+  1 cs-roll
+  postpone then
+; immediate
+
+: begin
+  postpone cs-open-dest
+; immediate
+
+: until
+  postpone cs-close-dest-if
+; immediate
+
+: again
+  postpone cs-close-dest-always
+; immediate
+
+: while
+  postpone if
+  1 cs-roll
+; immediate
+
+: repeat
+  postpone again
+  postpone then
+; immediate
+
 : do [compile] 2>r postpone begin ; immediate
+
 : unloop 2r> 2drop ;
+
 : loop
   [compile] r>
   [compile] 1+

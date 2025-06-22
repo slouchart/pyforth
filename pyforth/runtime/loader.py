@@ -7,12 +7,11 @@ from pyforth.abc import WORD, XT
 
 MODULES: Final[Sequence[str]] = (
     'arithmetic',
-    'branching',
     'comments',
+    'control_structures',
     'comparison',
     'heap',
     'logical',
-    'loops',
     'output',
     'primitives',
     'stacks',
