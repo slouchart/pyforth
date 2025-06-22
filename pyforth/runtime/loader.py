@@ -10,7 +10,6 @@ MODULES: Final[Sequence[str]] = (
     'branching',
     'comments',
     'comparison',
-    'doloop',
     'heap',
     'logical',
     'loops',

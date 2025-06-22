@@ -41,6 +41,26 @@ decimal
 : stack? depth 0<> ;
 : ?dup dup 0<> if dup then ;
 
+: do [compile] 2>r postpone begin ; immediate
+: unloop 2r> 2drop ;
+: loop
+  [compile] r>
+  [compile] 1+
+  [compile] r@
+  [compile] swap
+  [compile] dup
+  [compile] >r
+  [compile] =
+  postpone until
+  [compile] unloop
+; immediate
+
+: _unwind_loop r> r> ;
+: _rewind_loop rot rot >r >r ;
+: i r@ ;
+: j _unwind_loop i _rewind_loop ;
+: k _unwind_loop j _rewind_loop ;
+
 : cr 10 emit ;
 : bl 32 ;
 : space bl emit ;
