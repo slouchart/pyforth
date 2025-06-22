@@ -17,27 +17,8 @@ I use float built-in type ``float`` and the ``math`` module to emulate convertin
 integer and float and to compute special functions.
 
 
-Backlog
-=======
-
-Features
---------
-
-* refactoring: reduce the number of primitives, aim to define compiling words as DEFINED_XT
-  candidates: BEGIN, IF, ELSE, THEN, AGAIN, WHILE, REPEAT, UNTIL, DO, LOOP, [COMPILE] 
-* test memory management (arrays & strings)
-
-Documentation
--------------
-* docstrings for runtime execution tokens
-
-
-Bugs
-----
-
-
-Integration
------------
+TODO: Integration
+-----------------
 * add a pyproject.toml 
 * automate testing with tox for 3.10, 3.11, 3.12 and 3.13
 * add black, flake8, pylint and mypy steps

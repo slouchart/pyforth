@@ -15,7 +15,7 @@ def test_basic_define(interpreter, program, word, data_stack, return_stack):
 
 @pytest.mark.parametrize(
     'program, data_stack, return_stack', [
-        pytest.param(': MAIN 0 IF 1 ELSE 2 THEN DUP ; MAIN', [2, 2], [], ),
+        pytest.param(': MAIN 0 IF 1 ELSE 2 ENDIF DUP ; MAIN', [2, 2], [], ),
         pytest.param(': MAIN 1 IF 1 ELSE 2 THEN DUP ; MAIN', [1, 1], []),
         pytest.param(': MAIN 1 IF 2 THEN ; MAIN', [2], [], ),
         pytest.param(': MAIN IF 2 THEN DUP ; 3 0 MAIN', [3, 3], [], ),

@@ -49,6 +49,10 @@ decimal
   postpone cs-close-orig
 ; immediate
 
+: endif
+  postpone then
+; immediate
+
 : else
   postpone cs-open-orig-always
   1 cs-roll
